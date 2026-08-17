@@ -17,7 +17,7 @@ const SHEET_CSV =
 
 // Only the trip site may read this. Anything else gets refused.
 const ALLOWED_ORIGINS = [
-  "https://bansko.jhtechnicalsolutions.co.uk",
+  "https://bansko.jh-tech.co.uk",
   "http://localhost:8752",   // local preview
 ];
 

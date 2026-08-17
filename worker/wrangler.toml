@@ -2,6 +2,10 @@ name = "bansko-roster"
 main = "index.js"
 compatibility_date = "2026-08-17"
 
+# JHTS Cloudflare account, not the TOW one. Both are reachable from the same
+# login; this pins deploys to the right company.
+account_id = "28dac1e4bfc7d9a87bcae56161a2e5e2"
+
 # Deploy with:  cd worker && npx wrangler deploy
 #
 # That gives you https://bansko-roster.<your-subdomain>.workers.dev

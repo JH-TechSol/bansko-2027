@@ -102,7 +102,7 @@ Two things it buys beyond fixing CORS:
 - **The Zoho URL never reaches the browser.** It lives inside the Worker, so the
   sheet isn't discoverable from the page source or from this repo. That's better
   than the original design, where the data URL was public.
-- **Origin-locked.** Only `bansko.jhtechnicalsolutions.co.uk` and the local preview
+- **Origin-locked.** Only `bansko.jh-tech.co.uk` and the local preview
   can read it. Anything else gets a 403.
 
 If you ever change the published link, update `SHEET_CSV` in `worker/index.js` and
@@ -119,7 +119,7 @@ built-in roster and shows a warning banner rather than breaking.
 Any static host works — no build step, no server.
 
 - **Cloudflare Pages** (fits your existing setup): create a project, connect the repo
-  or drag the folder in, add `bansko.jhtechnicalsolutions.co.uk` as a custom domain.
+  or drag the folder in, add `bansko.jh-tech.co.uk` as a custom domain.
 - **GitHub Pages**: push to a repo under JH-TechSol, Settings → Pages → deploy from
   `main`, then point a CNAME at it. Same as the MEC demo.
 

@@ -15,15 +15,16 @@ const CONFIG = {
      ./worker fetches it server-side and re-serves it with CORS; the Zoho
      URL lives inside the Worker, so it never reaches the browser.
 
-     Deployed 17 Aug 2026. Redeploy after any change: cd worker && npx wrangler deploy
-     (Lives in the theorthoticworks.co.uk Cloudflare account, free tier.)
+     Redeploy after any change: cd worker && npx wrangler deploy
+     Lives in the JHTS Cloudflare account (pinned by account_id in
+     worker/wrangler.toml), free tier.
 
      The sheet itself: Bansko 2027 Payments, in Jake's WorkDrive
      https://sheet.zoho.eu/sheet/open/bmutud5fb91ec26e640b6851e769a4869a38e
 
      Leave empty and the site runs on seedPeople below, with the
      personal-link check still enforced anywhere but localhost.        */
-  dataUrl: "https://bansko-roster.jake-ac7.workers.dev",
+  dataUrl: "https://bansko-roster.bansko-roster-worker.workers.dev",
 
   /* --- Access ------------------------------------------------------
      Each person gets their own link: <siteUrl>/?k=THEIRKEY
@@ -32,7 +33,7 @@ const CONFIG = {
      requireKey: false shows the page to anyone who has the URL.      */
   access: {
     requireKey: true,
-    siteUrl: "https://bansko.jhtechnicalsolutions.co.uk",
+    siteUrl: "https://bansko.jh-tech.co.uk",
     rememberDays: 180,   // how long a device stays signed in
   },
 
