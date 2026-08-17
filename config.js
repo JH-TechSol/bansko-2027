@@ -25,12 +25,14 @@ const CONFIG = {
   /* --- Trip ------------------------------------------------------ */
   trip: {
     name: "Bansko 2027",
-    chalet: "River Pine",
+    // Moved from River Pine to Ginchini on 14 Aug 2026 — River Pine and Snow
+    // Pine both went to a returning 30+ group. Confirmed booked 17 Aug 2026.
+    chalet: "Ginchini Chalet",
     operator: "Explore Bansko Chalets",
-    chaletUrl: "https://explorebansko-chalets.com/",
+    chaletUrl: "https://explorebansko-chalets.com/ginchini-chalet",
     startDate: "2027-03-06",
     endDate: "2027-03-13",
-    groupSize: 8,          // operator minimum — below this the deal changes
+    groupSize: 8,          // price is based on 8 — below this the deal changes
   },
 
   /* --- Money (all £ per person unless stated) --------------------- */
@@ -49,19 +51,26 @@ const CONFIG = {
                    "jake"   -> credit comes off Jake's balance only
                    "both"   -> show a toggle on the page, decide later */
   credit: {
-    amount: 0,             // <-- TBC. Put the real number here.
+    amount: 600,           // confirmed by Martin, 7 Aug 2026
     mode: "both",
     defaultView: "split",  // which scenario shows first when mode = "both"
     beneficiary: "Jake Hodgson",
   },
 
   /* --- Payment schedule -------------------------------------------
-     PLACEHOLDERS — replace once the operator confirms their dates. */
+     What the OPERATOR wants (confirmed by Martin, 17 Aug 2026):
+       30% of £3,360 ≈ £1,000 deposit, less the £600 credit = £400 now.
+       Final balance 2 weeks before arrival, i.e. by 20 Feb 2027.
+       Paid in EUR by bank transfer. Bank details are deliberately NOT in
+       this file — they must not end up on a public page. They're in
+       Martin's email of 17 Aug 2026.
+
+     What JAKE collects from everyone is set below, and is his own call. */
   schedule: {
-    depositPerHead: 200,
+    depositPerHead: 100,
     depositDue: "2026-09-30",
-    balanceDue: "2027-01-31",
-    payTo: "Bank transfer to Jake — ask for details",
+    balanceDue: "2027-02-20",   // operator's deadline: 2 weeks before arrival
+    payTo: "Bank transfer to Jake — ask him for details",
   },
 
   /* --- Flights ---------------------------------------------------- */
@@ -82,13 +91,15 @@ const CONFIG = {
   },
 
   /* --- What you get ----------------------------------------------- */
+  // NOTE: this list came from the River Pine quote. Ginchini's own listing
+  // mentions a sauna but no hot tub — confirm with Martin before promising one.
   included: [
     "Breakfast every morning",
     "3-course evening meal (one night off)",
     "Beer and wine with dinner",
     "Sofia airport transfers, both ways",
     "Full ski hire — skis, boots, poles, helmet",
-    "Sauna and hot tub",
+    "Sauna",
     "Daily shuttle to and from the gondola station",
   ],
 
@@ -113,7 +124,7 @@ const CONFIG = {
       "Ski socks — one pair per day",
       "Neck warmer / buff",
       "Sun cream, factor 30+ (snow glare is brutal)",
-      "Swim shorts for the hot tub and sauna",
+      "Swim shorts for the sauna",
     ]},
     { group: "Don't bother", items: [
       "Skis, boots, poles, helmet — all included in the hire",
