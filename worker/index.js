@@ -10,10 +10,13 @@
  * the original Google Sheets design, where the data URL was public.
  */
 
-// The published CSV link. Kept here, not in the site's config.js.
-const SHEET_CSV =
-  "https://sheet.zohopublic.eu/sheet/published/bmutud5fb91ec26e640b6851e769a4869a38e" +
-  "?download=csv&sheetname=Sheet1";
+// The published CSV link lives in a Worker secret, NOT in this file — this repo
+// is public, and anyone holding that URL can read the whole roster including
+// everyone's access keys.
+//
+// Set or rotate it with:
+//   echo "https://sheet.zohopublic.eu/sheet/published/<id>?download=csv&sheetname=Sheet1" \
+//     | npx wrangler secret put SHEET_CSV
 
 // Only the trip site may read this. Anything else gets refused.
 const ALLOWED_ORIGINS = [
@@ -28,7 +31,7 @@ const corsHeaders = origin => ({
 });
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
     const allowed = ALLOWED_ORIGINS.includes(origin);
 
@@ -49,9 +52,16 @@ export default {
       return new Response("Not allowed from this origin", { status: 403 });
     }
 
+    if (!env.SHEET_CSV) {
+      return new Response(
+        "SHEET_CSV secret is not set on this Worker. See the comment at the top of index.js.",
+        { status: 500, headers: origin ? corsHeaders(origin) : {} }
+      );
+    }
+
     let upstream;
     try {
-      upstream = await fetch(SHEET_CSV, {
+      upstream = await fetch(env.SHEET_CSV, {
         // 60s edge cache: Zoho's publish endpoint is slow and the roster
         // changes a handful of times a year, not a second.
         cf: { cacheTtl: 60, cacheEverything: true },

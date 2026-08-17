@@ -21,7 +21,7 @@ strips it from the address bar, so they never need the link again on that device
 
 **What this does:** keeps the page out of casual hands, and puts each person's own
 balance at the top of their page. Because the Worker is origin-locked and holds the
-Zoho URL internally, the roster is not reachable except through the site itself —
+Zoho URL as a secret, the roster is not reachable except through the site itself —
 so someone who finds the bare site URL sees the "you need your own link" screen and
 has nothing else to pull on.
 
@@ -99,14 +99,16 @@ covers this many times over.
 
 Two things it buys beyond fixing CORS:
 
-- **The Zoho URL never reaches the browser.** It lives inside the Worker, so the
-  sheet isn't discoverable from the page source or from this repo. That's better
-  than the original design, where the data URL was public.
+- **The Zoho URL never reaches the browser.** It's held as a Worker secret
+  (`SHEET_CSV`), so it is in neither the page source nor this repo. It was
+  briefly hardcoded in `worker/index.js`, which would have exposed the whole
+  roster — keys included — the moment this repo went public. Set or rotate it
+  with `echo "<url>" | npx wrangler secret put SHEET_CSV`.
 - **Origin-locked.** Only `bansko.jh-tech.co.uk` and the local preview
   can read it. Anything else gets a 403.
 
-If you ever change the published link, update `SHEET_CSV` in `worker/index.js` and
-redeploy — no change to the site itself.
+If you ever change the published link, update the `SHEET_CSV` secret and redeploy —
+no change to the site itself.
 
 ### 4. Wire it up
 Open `config.js` and paste the **Worker** URL into `dataUrl` — not the Zoho link.
@@ -172,8 +174,11 @@ Open items:
    once either is firm.
 4. **Ginchini's hot tub.** The included list came from the River Pine quote; the
    Ginchini listing mentions a sauna only, so the hot tub has been removed. Worth
-   confirming with Martin — along with whether a group of 8 has the 10-bedroom
-   chalet to themselves.
+   confirming with Martin.
+5. **Group size.** You get sole use of the chalet, which sleeps 23 across 10
+   bedrooms, so there is a lot of room to grow. But the rate is per person, so
+   extra people cost the existing group money rather than saving it — see
+   "Adding people" below.
 
 ---
 
@@ -183,3 +188,31 @@ The page carries `noindex, nofollow` so search engines skip it, and the personal
 check keeps out anyone who wanders onto the bare URL. See "How the personal links
 work" above for the honest limits of that — the short version is: names, statuses and
 amounts are fine to put in the Sheet; phone numbers, addresses and bank details are not.
+
+---
+
+## Adding people
+
+You get **sole use** of Ginchini — 10 bedrooms, 23 beds — so space isn't the
+constraint. Money is, and it works the opposite way to how group trips usually do.
+
+The chalet is **£420 per person**, not a fixed pot. So an extra person doesn't
+split the cost further; they just add £420 to the total. And because the £600
+operator credit is shared out, every extra head makes it slightly *worse* for
+everyone already in:
+
+| People | Chalet after credit | All-in per head |
+|---|---|---|
+| 8 | £345.00 | £902.24 |
+| 10 | £360.00 | £917.24 |
+| 12 | £370.00 | £927.24 |
+| 15 | £380.00 | £937.24 |
+
+Beds, if nobody wants to share a double: five doubles (rooms 1, 2, 7, 8, 9) used
+as singles, two confirmed twin rooms (3 and 5), and three sleeps-3 rooms (4, 6,
+10). That's roughly 15–18 people each with their own bed.
+
+**Before offering anyone a price**, get Martin to confirm £420pp still holds
+above 8 — his October 2025 list was explicitly "based on 8 person". Worth asking
+for a flat rate if you go large: the 2026 half-term quote was £8,000 for up to 20
+guests, so somewhere around 19 people the per-person rate stops making sense.
