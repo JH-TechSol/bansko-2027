@@ -60,16 +60,51 @@ const CONFIG = {
     // cheaper, and fewer than 8 isn't a price rise — it's no booking.
     chaletPerHead: 420,
     chaletTotal: 3360,   // display only: 420 x 8
+
+    // Non-travel extras only. Flights and the airport run are derived from
+    // whichever option is picked in `flightOptions` below, so the breakdown
+    // always matches the chosen airport.
     extras: [
-      { label: "Flights",
-        note: "Ryanair PLUS, 20kg — not booked yet, price will move",
-        amount: 202.24, estimate: true },
       { label: "Lift pass",
         note: "estimate, buy in resort",
         amount: 295, estimate: true },
-      { label: "Getting to Liverpool Airport",
-        note: "estimate — minibus from York, split 8 ways",
-        amount: 60, estimate: true },
+    ],
+  },
+
+  /* --- Flight options ----------------------------------------------
+     Nothing is booked. Fares below are real Ryanair prices for a party
+     of 8, checked 17 Aug 2026, and they will move.
+
+     Set `chosen` to an iata code and the whole page follows it — cost
+     breakdown, per-head total, the lot.                                */
+  flightOptions: {
+    chosen: "LPL",
+    // 20kg check-in bag, both ways. Ryanair publish £18.99–£59.99 per
+    // flight depending on route and date; ~£37 each way fits this route.
+    bagPerHead: 75,
+    bagNote: "20kg hold bag, both ways",
+    choices: [
+      {
+        iata: "LPL", airport: "Liverpool", drive: "1h 45m from York",
+        out:  { code: "FR6338", depart: "08:05", arrive: "13:25", fare: 57.74 },
+        back: { code: "FR6337", depart: "06:00", arrive: "07:40", fare: 69.99 },
+        transferPerHead: 60,
+        verdict: "Nearest airport, but the worst schedule. 01:00 chalet pickup on the way home.",
+      },
+      {
+        iata: "BHX", airport: "Birmingham", drive: "2h 30m from York",
+        out:  { code: "FR6336", depart: "06:15", arrive: "11:25", fare: 57.84 },
+        back: { code: "FR6335", depart: "11:55", arrive: "13:25", fare: 57.84 },
+        transferPerHead: 75,
+        verdict: "Civilised trip home, but a 01:30 start from York on the way out.",
+      },
+      {
+        iata: "STN", airport: "London Stansted", drive: "3h 30m from York",
+        out:  { code: "FR8515", depart: "15:45", arrive: "20:50", fare: 43.89 },
+        back: { code: "FR8516", depart: "21:15", arrive: "22:35", fare: 50.44 },
+        transferPerHead: 110,
+        verdict: "Best schedule by a mile — a lie-in on the way out and a full last day on the mountain. Longest drive.",
+      },
     ],
   },
 
@@ -105,23 +140,13 @@ const CONFIG = {
   /* --- Flights ---------------------------------------------------- */
   flights: {
     airline: "Ryanair",
-    fare: "PLUS fare, 20kg hold bag included",
-    // Not booked as of 17 Aug 2026. These are the intended flights at the
-    // quoted price; eight seats on one Ryanair flight in March won't hold.
+    fare: "basic fare plus a 20kg hold bag",
+    // Not booked as of 17 Aug 2026, and the airport isn't settled either —
+    // see flightOptions. Times and codes below follow flightOptions.chosen.
     booked: false,
-    notBookedWarning: "Not booked yet. £202.24 was the price when we looked — " +
-      "Ryanair fares climb as seats go, and we need eight on the same flight.",
-    out: {
-      code: "FR6338", date: "2027-03-06",
-      from: "Liverpool (LPL)", to: "Sofia (SOF)",
-      depart: "08:05", arrive: "13:25",
-    },
-    back: {
-      code: "FR6337", date: "2027-03-13",
-      from: "Sofia (SOF)", to: "Liverpool (LPL)",
-      depart: "06:00", arrive: "07:40",
-      warning: "06:00 departure — chalet pickup around 01:00. Pack the night before.",
-    },
+    notBookedWarning: "Not booked yet, and the airport isn't settled — see the " +
+      "options below. Fares move, and eight seats going at once is what pushes " +
+      "them into the next price band.",
   },
 
   /* --- What you get ----------------------------------------------- */
@@ -137,10 +162,10 @@ const CONFIG = {
     "Daily shuttle to and from the gondola station",
   ],
 
+  // Flights and the airport run are added automatically from the chosen
+  // flight option, so they can't go stale when the airport changes.
   notIncluded: [
     { item: "Lift pass", note: "~£295pp, buy in resort" },
-    { item: "Flights", note: "£202.24pp, booked separately" },
-    { item: "Getting to Liverpool Airport", note: "~£60pp, minibus from York" },
     { item: "Lessons", note: "Only if anyone wants them" },
     { item: "Shuttle to mountain top", note: "€8pp/day — not needed in March" },
     { item: "Food on the night off", note: "One evening, eat in town" },

@@ -154,8 +154,36 @@ const payers = () => people.filter(p => p.status !== "dropped" && p.status !== "
 
 const openSeats = () => people.filter(p => p.status === "open").length;
 
+/* ---------- flights ----------
+   Travel cost follows whichever airport is picked in flightOptions.chosen,
+   so the breakdown can never drift from the option on show. */
+
+const chosenFlight = () => {
+  const fo = CONFIG.flightOptions;
+  return fo && fo.choices.find(c => c.iata === fo.chosen);
+};
+
+const flightFare = c => c.out.fare + c.back.fare;
+const flightAllIn = c => flightFare(c) + CONFIG.flightOptions.bagPerHead;
+const optionTotal = c => flightAllIn(c) + c.transferPerHead;
+
+// Flights + airport run, as breakdown rows.
+function travelRows() {
+  const c = chosenFlight();
+  if (!c) return [];
+  return [
+    { label: "Flights",
+      note: c.airport + " return, " + CONFIG.flightOptions.bagNote,
+      amount: flightAllIn(c), estimate: true },
+    { label: "Getting to " + c.airport,
+      note: "estimate — minibus from York, split " + CONFIG.trip.groupSize + " ways",
+      amount: c.transferPerHead, estimate: true },
+  ];
+}
+
 // Sum of everything that isn't the chalet.
-const extrasTotal = () => CONFIG.costs.extras.reduce((s, x) => s + x.amount, 0);
+const extrasTotal = () =>
+  [...CONFIG.costs.extras, ...travelRows()].reduce((s, x) => s + x.amount, 0);
 
 // Chalet cost per person. It's a flat per-person rate, so headcount doesn't
 // change it — only how thinly the operator credit spreads.
@@ -319,7 +347,7 @@ function renderBreakdown() {
   if (creditView === "split" && cr.amount > 0) {
     rows.push(["Operator credit, split " + heads + " ways", "&minus;" + money(cr.amount / heads)]);
   }
-  c.extras.forEach(x => {
+  [...c.extras, ...travelRows()].forEach(x => {
     rows.push([esc(x.label) + (x.note ? " <span class='est'>" + esc(x.note) + "</span>" : ""), money(x.amount)]);
   });
 
@@ -338,7 +366,7 @@ function renderBreakdown() {
       "'s balance only, taking it to " + money(totalFor({ name: cr.beneficiary })) +
       ". Everyone else pays the figure above.");
   }
-  const guesses = c.extras.filter(x => x.estimate).map(x => esc(x.label));
+  const guesses = [...c.extras, ...travelRows()].filter(x => x.estimate).map(x => esc(x.label));
   if (guesses.length) {
     const list = guesses.length === 1 ? guesses[0]
       : guesses.slice(0, -1).join(", ") + " and " + guesses.slice(-1);
@@ -359,20 +387,75 @@ function renderSchedule() {
   ].map(([k, v]) => '<div class="kv"><span>' + k + "</span><span>" + v + "</span></div>").join("");
 }
 
-function renderFlights() {
-  const f = CONFIG.flights;
-  const leg = (l, label) =>
-    '<div class="flight">' +
-      '<div><div class="code">' + esc(l.code) + '</div><div class="time">' + esc(l.depart) + '</div><div class="apt">' + esc(l.from) + "</div></div>" +
-      '<div class="mid">' + label + " &rarr;</div>" +
-      '<div style="text-align:right"><div class="code">&nbsp;</div><div class="time">' + esc(l.arrive) + '</div><div class="apt">' + esc(l.to) + "</div></div>" +
-      '<div class="when">' + fmtDate(l.date) + " · " + esc(f.airline) + ", " + esc(f.fare) + "</div>" +
+function renderFlightOptions() {
+  const fo = CONFIG.flightOptions;
+  if (!fo || !fo.choices.length) { $("flightOptions").innerHTML = ""; return; }
+
+  const cheapest = Math.min(...fo.choices.map(optionTotal));
+
+  const cards = fo.choices.map(c => {
+    const picked = c.iata === fo.chosen;
+    const total = optionTotal(c);
+    const diff = total - cheapest;
+
+    return '<div class="opt' + (picked ? " picked" : "") + '">' +
+      '<div class="opt-head">' +
+        "<div><strong>" + esc(c.airport) + "</strong>" +
+          (picked ? ' <span class="you">current plan</span>' : "") +
+          '<div class="opt-drive">' + esc(c.drive) + "</div></div>" +
+        '<div class="opt-price">' + money0(total) +
+          '<div class="opt-sub">' + (diff === 0 ? "cheapest" : "+" + money0(diff)) + "</div></div>" +
+      "</div>" +
+      '<div class="opt-legs">' +
+        '<div><span class="lbl">Out</span> ' + esc(c.out.depart) + " &rarr; " + esc(c.out.arrive) +
+          ' <span class="est">' + esc(c.out.code) + " · " + money(c.out.fare) + "</span></div>" +
+        '<div><span class="lbl">Back</span> ' + esc(c.back.depart) + " &rarr; " + esc(c.back.arrive) +
+          ' <span class="est">' + esc(c.back.code) + " · " + money(c.back.fare) + "</span></div>" +
+      "</div>" +
+      '<div class="opt-verdict">' + esc(c.verdict) + "</div>" +
     "</div>";
+  }).join("");
+
+  $("flightOptions").innerHTML = cards +
+    '<div class="note info" style="margin-top:12px">' +
+      "Totals are per person: fares for a party of " + CONFIG.trip.groupSize +
+      " (real Ryanair prices, checked 17 Aug 2026) plus " + money0(fo.bagPerHead) +
+      " for a 20kg bag both ways, plus the minibus from York. " +
+      "<strong>Nothing is booked</strong> — fares move, and eight seats going at once is what pushes them up." +
+    "</div>";
+}
+
+function renderFlights() {
+  const f = CONFIG.flights, t = CONFIG.trip;
+  const c = chosenFlight();
+  if (!c) { $("flights").innerHTML = ""; return; }
+
+  const leg = (l, label, date, from, to) =>
+    '<div class="flight">' +
+      '<div><div class="code">' + esc(l.code) + '</div><div class="time">' + esc(l.depart) +
+        '</div><div class="apt">' + esc(from) + "</div></div>" +
+      '<div class="mid">' + label + " &rarr;</div>" +
+      '<div style="text-align:right"><div class="code">&nbsp;</div><div class="time">' + esc(l.arrive) +
+        '</div><div class="apt">' + esc(to) + "</div></div>" +
+      '<div class="when">' + fmtDate(date) + " · " + esc(f.airline) + ", " + esc(f.fare) + "</div>" +
+    "</div>";
+
+  const here = c.airport + " (" + c.iata + ")";
+  const there = "Sofia (SOF)";
+
   const warnings = [];
   if (f.booked === false && f.notBookedWarning) warnings.push(f.notBookedWarning);
-  if (f.back.warning) warnings.push(f.back.warning);
 
-  $("flights").innerHTML = leg(f.out, "Out") + leg(f.back, "Back") +
+  // A pre-09:00 flight home means leaving the chalet in the middle of the night.
+  const backHour = parseInt(c.back.depart.split(":")[0], 10);
+  if (backHour < 9) {
+    warnings.push(c.back.depart + " departure — chalet pickup around " +
+      String((backHour + 19) % 24).padStart(2, "0") + ":00. Pack the night before.");
+  }
+
+  $("flights").innerHTML =
+    leg(c.out, "Out", t.startDate, here, there) +
+    leg(c.back, "Back", t.endDate, there, here) +
     (warnings.length
       ? '<div class="pad">' + warnings.map(w => '<div class="note" style="margin-bottom:8px">' +
           esc(w) + "</div>").join("") + "</div>"
@@ -390,7 +473,10 @@ function renderInfo() {
     "</div>";
 
   $("included").innerHTML = CONFIG.included.map(i => "<li>" + esc(i) + "</li>").join("");
-  $("notIncluded").innerHTML = CONFIG.notIncluded.map(i =>
+  const travel = travelRows().map(r => ({
+    item: r.label, note: "~" + money0(r.amount) + "pp, " + r.note.replace(/^estimate — /, ""),
+  }));
+  $("notIncluded").innerHTML = [...travel, ...CONFIG.notIncluded].map(i =>
     "<li>" + esc(i.item) + ' <span class="est">' + esc(i.note) + "</span></li>").join("");
 
   $("packing").innerHTML = CONFIG.packing.map(g =>
@@ -410,6 +496,7 @@ function renderAll() {
   renderBreakdown();
   renderSchedule();
   renderFlights();
+  renderFlightOptions();
   renderInfo();
 }
 
