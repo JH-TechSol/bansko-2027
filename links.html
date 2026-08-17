@@ -53,8 +53,8 @@ textarea { width:100%; min-height:90px; padding:10px 12px; border:1px solid var(
 </div>
 
 <div class="card">
-  <label for="csv">Google Sheet CSV URL</label>
-  <input type="text" id="csv" placeholder="https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?...&output=csv">
+  <label for="csv">Published Zoho Sheet CSV link</label>
+  <input type="text" id="csv" placeholder="https://sheet.zoho.eu/... (the downloadable CSV link from Share &rarr; Publish)">
   <label for="site" style="margin-top:14px">Site URL</label>
   <input type="text" id="site" placeholder="https://bansko.jhtechnicalsolutions.co.uk">
   <div class="row">
@@ -73,7 +73,7 @@ textarea { width:100%; min-height:90px; padding:10px 12px; border:1px solid var(
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-$("csv").value = CONFIG.sheetCsvUrl || "";
+$("csv").value = CONFIG.dataUrl || "";
 $("site").value = CONFIG.access.siteUrl || "";
 
 /* Unambiguous alphabet — no 0/O, 1/I/L, so keys survive being read aloud. */
