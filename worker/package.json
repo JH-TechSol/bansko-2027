@@ -1,0 +1,5 @@
+{
+  "name": "bansko-roster-worker",
+  "private": true,
+  "type": "module"
+}

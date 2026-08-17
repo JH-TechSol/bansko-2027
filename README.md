@@ -7,7 +7,8 @@ by name and shows what they still owe.
 ```
 index.html    the page everyone sees
 config.js     every number, date and bit of text you'd want to change
-app.js        fetches the Sheet, does the maths, renders the page
+app.js        fetches the roster, does the maths, renders the page
+worker/       Cloudflare Worker that serves the Zoho CSV to the browser
 links.html    mints one personal link per person — run locally, don't deploy
 roster-template.csv   import this into the Zoho Sheet to start
 ```
@@ -19,16 +20,20 @@ Each person has a random 10-character key in the Sheet's `Key` column. Their lin
 strips it from the address bar, so they never need the link again on that device.
 
 **What this does:** keeps the page out of casual hands, and puts each person's own
-balance at the top of their page.
+balance at the top of their page. Because the Worker is origin-locked and holds the
+Zoho URL internally, the roster is not reachable except through the site itself —
+so someone who finds the bare site URL sees the "you need your own link" screen and
+has nothing else to pull on.
 
-**What this does not do:** protect the data cryptographically. The Sheet is published
-as CSV, so anyone holding any link could read the whole sheet if they went looking.
-That is fine for eight mates who all see each other's figures anyway — but it is the
-reason there is **no mobile number column, and there must never be one.** Names,
-statuses and amounts only.
+**What this does not do:** stop one of the eight from sharing their own link, or from
+opening dev tools and reading the roster the page already loaded. Everyone sees
+everyone's figures by design, so that costs nothing here. It is still the reason
+there is **no mobile number column, and there must never be one.** Names, statuses
+and amounts only — no phone numbers, no addresses, no bank details.
 
-If you ever need real protection, the upgrade is a Cloudflare Worker sitting in front
-of the Sheet with SMS or email verification. That is a rebuild, not a setting.
+If you ever want per-person data rather than shared visibility, the upgrade is to
+move the key check into the Worker so it only ever returns the requesting person's
+row. The Worker already exists, so that's a change rather than a rebuild.
 
 ---
 
@@ -47,8 +52,8 @@ Columns the site reads (header row must exist, order doesn't matter, case doesn'
 | Column | What goes in it |
 |---|---|
 | `Name` | Required. The row is ignored if this is blank. |
-| `Key` | Leave blank — `links.html` fills these in at step 5. |
-| `Status` | `confirmed`, `pending`, `dropped` or `unknown` |
+| `Key` | Leave blank — `links.html` fills these in at step 6. |
+| `Status` | See below |
 | `Deposit Paid` | £ actually received. `0` if nothing yet. |
 | `Balance Paid` | £ actually received. |
 | `Notes` | Free text, shows under their name |
@@ -72,17 +77,45 @@ sheet editable and it doesn't expose the rest of your WorkDrive.
 
 To unpublish later, the same dialog has the switch.
 
-### 3. Wire it up
-Open `config.js` and paste the CSV link into `dataUrl`. That's the only edit needed.
+### 3. Deploy the CSV proxy
 
-**One caveat that has to be tested, not assumed:** the browser can only read that
-CSV if Zoho serves it with a permissive `Access-Control-Allow-Origin` header. If it
-doesn't, the page falls back to the built-in roster and shows a warning banner
-rather than breaking. Load the site once after wiring it up and check the banner is
-gone — that's the test. If CORS does block it, the fallback is to keep the roster in
-this repo and edit it there instead.
+**Zoho's published CSV cannot be read by a browser.** Tested 17 Aug 2026: the
+endpoint returns the CSV happily to a server, but sends no
+`Access-Control-Allow-Origin` header, so the browser refuses it —
 
-### 4. Host it
+```
+Access to fetch at 'https://sheet.zohopublic.eu/...' has been blocked by CORS
+policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+```
+
+`worker/` solves it. It fetches the sheet server-side and re-serves it with CORS:
+
+```
+cd worker && npx wrangler deploy
+```
+
+That gives you `https://bansko-roster.<your-subdomain>.workers.dev`. Free tier
+covers this many times over.
+
+Two things it buys beyond fixing CORS:
+
+- **The Zoho URL never reaches the browser.** It lives inside the Worker, so the
+  sheet isn't discoverable from the page source or from this repo. That's better
+  than the original design, where the data URL was public.
+- **Origin-locked.** Only `bansko.jhtechnicalsolutions.co.uk` and the local preview
+  can read it. Anything else gets a 403.
+
+If you ever change the published link, update `SHEET_CSV` in `worker/index.js` and
+redeploy — no change to the site itself.
+
+### 4. Wire it up
+Open `config.js` and paste the **Worker** URL into `dataUrl` — not the Zoho link.
+That's the only edit needed.
+
+If the sheet is ever unpublished or the link changes, the page falls back to the
+built-in roster and shows a warning banner rather than breaking.
+
+### 5. Host it
 Any static host works — no build step, no server.
 
 - **Cloudflare Pages** (fits your existing setup): create a project, connect the repo
@@ -96,9 +129,9 @@ the site shortly afterwards rather than instantly.
 **Don't upload `links.html`** — or delete it from the host once you've sent the links.
 It lists everyone's key on one screen.
 
-### 5. Mint the links and send them
+### 6. Mint the links and send them
 Open `links.html` by double-clicking it (it works straight off your Mac, no server).
-Paste in the same CSV URL and your site URL, hit **Load roster and mint keys**, then:
+Paste in the **Worker** URL and your site URL, hit **Load roster and mint keys**, then:
 
 1. **Copy the key column** and paste it into the Sheet's `Key` column, from row 2 down
 2. Hit **Copy message** next to each person and paste it into WhatsApp
@@ -121,17 +154,26 @@ send them their link.
 
 ## Still to confirm
 
-These are placeholders in `config.js`. Replace them when you know:
+Confirmed from Martin's email of 17 Aug 2026 and already in `config.js`: the chalet
+is **Ginchini** (River Pine went to a bigger group), the credit is **£600**, the
+deposit is 30% less that credit = **£400 payable now**, and the balance is due
+**2 weeks before arrival, 20 Feb 2027**. Per head is **£902.24**.
 
-1. `credit.amount` — the £ credit from the cancelled 2026 booking. Currently `0`,
-   so the page shows a note saying it isn't included yet.
-2. `credit.mode` — set to `"both"`, which puts a toggle on the page so you can see
-   the credit split 8 ways vs. all against your own share. Once you've decided,
-   change it to `"split"` or `"jake"` and the toggle disappears.
-3. `schedule.depositPerHead`, `depositDue`, `balanceDue` — guessed at £200 by
-   30 Sep 2026 and the balance by 31 Jan 2027. Martin/Milen will dictate the real ones.
-4. `costs.liftPassPerHead` — £295 is an estimate and is labelled as such on the page.
-   Set `liftPassIsEstimate: false` once it's firm.
+Open items:
+
+1. `credit.mode` — set to `"both"`, which puts a toggle on the page: credit split 8
+   ways vs. all against Jake's own share. Once decided, change it to `"split"` or
+   `"jake"` and the toggle disappears.
+2. `schedule.depositPerHead` — currently £100, which covers Martin's £400 with a bit
+   spare. If the flights are already paid for out of pocket, this wants to be nearer
+   £300 so the money comes back in.
+3. `costs.extras` — the lift pass (£295) and the York→Liverpool minibus (£60) are
+   both marked `estimate: true` and labelled as estimates on the page. Drop the flag
+   once either is firm.
+4. **Ginchini's hot tub.** The included list came from the River Pine quote; the
+   Ginchini listing mentions a sauna only, so the hot tub has been removed. Worth
+   confirming with Martin — along with whether a group of 8 has the 10-bedroom
+   chalet to themselves.
 
 ---
 

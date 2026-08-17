@@ -1,0 +1,16 @@
+name = "bansko-roster"
+main = "index.js"
+compatibility_date = "2026-08-17"
+
+# Deploy with:  cd worker && npx wrangler deploy
+#
+# That gives you https://bansko-roster.<your-subdomain>.workers.dev
+# Paste that URL into ../config.js as `dataUrl` and you're done.
+#
+# Optional: put it on your own domain instead by uncommenting the route below
+# and adding a `roster` CNAME in GoDaddy. Not required — the workers.dev URL
+# works fine, and nobody but the site ever sees it.
+#
+# [[routes]]
+# pattern = "roster.jhtechnicalsolutions.co.uk"
+# custom_domain = true

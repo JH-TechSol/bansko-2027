@@ -7,13 +7,19 @@
 const CONFIG = {
 
   /* --- Data layer --------------------------------------------------
-     A URL returning the roster as CSV. Built for the published-CSV
-     link from Zoho Sheet (see README step 2), but any URL serving CSV
-     with permissive CORS works.
+     This must be the Cloudflare Worker URL, NOT the Zoho link.
 
-     The workbook already exists in Jake's WorkDrive private space:
-       Bansko 2027 Payments
-       https://sheet.zoho.eu/sheet/open/bmutud5fb91ec26e640b6851e769a4869a38e
+     Zoho's published-sheet endpoint serves the CSV fine to a server but
+     sends no Access-Control-Allow-Origin header, so a browser fetch is
+     blocked outright. Tested and confirmed 17 Aug 2026. The Worker in
+     ./worker fetches it server-side and re-serves it with CORS; the Zoho
+     URL lives inside the Worker, so it never reaches the browser.
+
+     Deploy: cd worker && npx wrangler deploy
+     Then paste the resulting https://bansko-roster.*.workers.dev here.
+
+     The sheet itself: Bansko 2027 Payments, in Jake's WorkDrive
+     https://sheet.zoho.eu/sheet/open/bmutud5fb91ec26e640b6851e769a4869a38e
 
      Leave empty and the site runs on seedPeople below, with the
      personal-link check still enforced anywhere but localhost.        */
