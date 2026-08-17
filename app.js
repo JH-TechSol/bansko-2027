@@ -462,6 +462,51 @@ function renderFlights() {
       : "");
 }
 
+function renderRooms() {
+  const r = CONFIG.rooms;
+  if (!r || !r.list.length) { $("rooms").innerHTML = ""; return; }
+
+  const doubles = r.list.reduce((a, x) => a + x.doubles, 0);
+  const singles = r.list.reduce((a, x) => a + x.singles, 0);
+  const ownBed = doubles + singles;          // nobody shares a double
+  const shared = doubles * 2 + singles;      // couples in the doubles
+  const heads = payers().length;
+  const spareRooms = r.list.length - heads;
+
+  const beds = x => {
+    const bits = [];
+    if (x.doubles) bits.push(x.doubles + " double" + (x.doubles > 1 ? "s" : ""));
+    if (x.singles) bits.push(x.singles + " single" + (x.singles > 1 ? "s" : ""));
+    return bits.join(" + ");
+  };
+
+  const stat = (k, v, n) =>
+    '<div class="stat"><div class="k">' + k + '</div><div class="v">' + v +
+    '</div><div class="n">' + n + "</div></div>";
+
+  $("rooms").innerHTML =
+    '<div class="stats" style="margin-bottom:12px">' +
+      stat("Bedrooms", r.list.length, doubles + " doubles, " + singles + " singles") +
+      stat("Own bed each", ownBed, "nobody sharing a double") +
+      stat("Absolute max", shared, "if doubles are shared") +
+      stat("Us", heads, spareRooms > 0
+        ? spareRooms + " spare room" + (spareRooms === 1 ? "" : "s")
+        : "every room used") +
+    "</div>" +
+    '<div class="card">' +
+      r.list.map(x => '<div class="kv"><span>' + esc(x.name) + "</span><span>" +
+        esc(beds(x)) + "</span></div>").join("") +
+    "</div>" +
+    (spareRooms > 0
+      ? '<div class="note info" style="margin-top:12px">We have the whole chalet, and ' +
+        "there are more bedrooms than there are of us — so everyone can have their own " +
+        "room, let alone their own bed. Room for " + (ownBed - heads) +
+        " more before anyone would have to share a double." +
+        (r.useLounge === false ? " The lounge sofabed is spare on top of all this." : "") +
+        "</div>"
+      : "");
+}
+
 function renderInfo() {
   const t = CONFIG.trip;
   $("chaletLink").innerHTML =
@@ -497,6 +542,7 @@ function renderAll() {
   renderSchedule();
   renderFlights();
   renderFlightOptions();
+  renderRooms();
   renderInfo();
 }
 

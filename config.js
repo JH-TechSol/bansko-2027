@@ -150,6 +150,31 @@ const CONFIG = {
       "them into the next price band.",
   },
 
+  /* --- Beds ---------------------------------------------------------
+     Confirmed by Jake from the operator's room photos, 18 Aug 2026.
+     We get sole use of the chalet, so all of this is ours.
+
+     Two rooms differ from the operator's own "sleeps" labels: they list
+     Bedroom 3 as sleeps 2 (plus a foldout) and Bedroom 6 as sleeps 3.
+     The errors cancel out, and the total still comes to their 23.
+
+     The lounge sofabed would add 2 more. We're not using it.           */
+  rooms: {
+    useLounge: false,
+    list: [
+      { name: "Bedroom 1",  doubles: 1, singles: 0 },
+      { name: "Bedroom 2",  doubles: 1, singles: 0 },
+      { name: "Bedroom 3",  doubles: 0, singles: 3 },
+      { name: "Bedroom 4",  doubles: 0, singles: 3 },
+      { name: "Bedroom 5",  doubles: 0, singles: 2 },
+      { name: "Bedroom 6",  doubles: 0, singles: 2 },
+      { name: "Bedroom 7",  doubles: 1, singles: 0 },
+      { name: "Bedroom 8",  doubles: 1, singles: 0 },
+      { name: "Bedroom 9",  doubles: 1, singles: 0 },
+      { name: "Bedroom 10", doubles: 1, singles: 1 },
+    ],
+  },
+
   /* --- What you get ----------------------------------------------- */
   // NOTE: this list came from the River Pine quote. Ginchini's own listing
   // mentions a sauna but no hot tub — confirm with Martin before promising one.
