@@ -54,12 +54,16 @@ const CONFIG = {
      off it. Everything else is a line in `extras` — add or remove rows
      freely (lessons, insurance, whatever) and the page keeps up.        */
   costs: {
+    // £420 PER PERSON, not a fixed pot to be divided. Martin, 6 Oct 2025:
+    // "prices go down and are calculated per person not a set amount. The
+    // minimum required group size is 8." So more people does not make it
+    // cheaper, and fewer than 8 isn't a price rise — it's no booking.
     chaletPerHead: 420,
-    chaletTotal: 3360,
+    chaletTotal: 3360,   // display only: 420 x 8
     extras: [
       { label: "Flights",
-        note: "Ryanair PLUS, 20kg",
-        amount: 202.24 },
+        note: "Ryanair PLUS, 20kg — not booked yet, price will move",
+        amount: 202.24, estimate: true },
       { label: "Lift pass",
         note: "estimate, buy in resort",
         amount: 295, estimate: true },
@@ -102,6 +106,11 @@ const CONFIG = {
   flights: {
     airline: "Ryanair",
     fare: "PLUS fare, 20kg hold bag included",
+    // Not booked as of 17 Aug 2026. These are the intended flights at the
+    // quoted price; eight seats on one Ryanair flight in March won't hold.
+    booked: false,
+    notBookedWarning: "Not booked yet. £202.24 was the price when we looked — " +
+      "Ryanair fares climb as seats go, and we need eight on the same flight.",
     out: {
       code: "FR6338", date: "2027-03-06",
       from: "Liverpool (LPL)", to: "Sofia (SOF)",
@@ -175,11 +184,11 @@ const CONFIG = {
   seedPeople: [
     { name: "Jake Hodgson",   key: "demo-jake",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "Organiser" },
     { name: "Jake Love",      key: "demo-love",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
-    { name: "Steve",          key: "demo-steve", status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
-    { name: "Matt",           key: "demo-matt",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
-    { name: "Adam",           key: "demo-adam",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
-    { name: "Jack",           key: "demo-jack",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
-    { name: "James (Primmer)",key: "demo-james", status: "pending",   depositPaid: 0, balancePaid: 0, notes: "Awaiting wife's approval" },
+    { name: "Steve Turnbill", key: "demo-steve", status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
+    { name: "Matt Barker",    key: "demo-matt",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
+    { name: "Adam Swan",      key: "demo-adam",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
+    { name: "Jack Myhill",    key: "demo-jack",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
+    { name: "James Primmer",  key: "demo-james", status: "pending",   depositPaid: 0, balancePaid: 0, notes: "Awaiting wife's approval" },
     { name: "8th place",      key: "",           status: "open",      depositPaid: 0, balancePaid: 0, notes: "Seat open — needs a name to hold the £420pp chalet price" },
   ],
 };

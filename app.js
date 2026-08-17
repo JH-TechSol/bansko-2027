@@ -157,13 +157,14 @@ const openSeats = () => people.filter(p => p.status === "open").length;
 // Sum of everything that isn't the chalet.
 const extrasTotal = () => CONFIG.costs.extras.reduce((s, x) => s + x.amount, 0);
 
-// Chalet share per person under the current credit view.
+// Chalet cost per person. It's a flat per-person rate, so headcount doesn't
+// change it — only how thinly the operator credit spreads.
 function chaletShare() {
   const c = CONFIG.costs, cr = CONFIG.credit;
   const heads = Math.max(counted().length, 1);
   return creditView === "split"
-    ? (c.chaletTotal - cr.amount) / heads
-    : c.chaletTotal / heads;
+    ? c.chaletPerHead - cr.amount / heads
+    : c.chaletPerHead;
 }
 
 // Pass a person to get their individual figure; pass nothing for the standard head.
@@ -273,27 +274,25 @@ function renderSpotsNote() {
   const c = CONFIG.costs;
   const open = openSeats();
   const filled = payers().length;
-  const short = CONFIG.trip.groupSize - people.filter(p => p.status === "confirmed").length;
 
-  if (open > 0 && filled > 0) {
-    const ifFilled = c.chaletTotal / CONFIG.trip.groupSize;
-    const ifNot = c.chaletTotal / filled;
+  // The chalet is a flat per-person rate with a hard minimum of 8. Being short
+  // doesn't make it dearer for everyone else — it means there's no booking.
+  const shortfall = CONFIG.trip.groupSize - filled;
+
+  if (shortfall > 0) {
     $("spotsNote").innerHTML = '<div class="note" style="margin-top:12px">' +
-      open + (open === 1 ? " seat" : " seats") + " still open. The £" +
-      c.chaletTotal.toLocaleString("en-GB") + " chalet is priced on " + CONFIG.trip.groupSize +
-      " people, so if " + (open === 1 ? "it stays" : "they stay") + " empty the chalet share goes from " +
-      money(ifFilled) + " to " + money(ifNot) + " each — about " +
-      money(ifNot - ifFilled) + " more per person." +
+      "<strong>" + shortfall + " more " + (shortfall === 1 ? "person" : "people") +
+      " needed.</strong> " + esc(CONFIG.trip.operator) + " won't run the chalet below " +
+      CONFIG.trip.groupSize + ". The price is " + money(c.chaletPerHead) +
+      " each whatever the numbers, so nobody pays more if we're short — " +
+      "we just don't go. Extra people beyond " + CONFIG.trip.groupSize +
+      " don't make it cheaper either." +
       "</div>";
     return;
   }
 
-  $("spotsNote").innerHTML = short > 0
-    ? '<div class="note" style="margin-top:12px">' + short + " more " +
-      (short === 1 ? "person" : "people") + " to lock in. The price is based on " +
-      CONFIG.trip.groupSize + " — fewer, and everyone's chalet share goes up.</div>"
-    : '<div class="note info" style="margin-top:12px">All ' + CONFIG.trip.groupSize +
-      " places confirmed.</div>";
+  $("spotsNote").innerHTML = '<div class="note info" style="margin-top:12px">All ' +
+    CONFIG.trip.groupSize + " places filled.</div>";
 }
 
 function renderCreditToggle() {
@@ -316,7 +315,7 @@ function renderBreakdown() {
   const heads = Math.max(counted().length, 1);
   const rows = [];
 
-  rows.push(["Chalet", money(c.chaletTotal / heads)]);
+  rows.push(["Chalet <span class='est'>per person, min 8</span>", money(c.chaletPerHead)]);
   if (creditView === "split" && cr.amount > 0) {
     rows.push(["Operator credit, split " + heads + " ways", "&minus;" + money(cr.amount / heads)]);
   }
@@ -369,8 +368,15 @@ function renderFlights() {
       '<div style="text-align:right"><div class="code">&nbsp;</div><div class="time">' + esc(l.arrive) + '</div><div class="apt">' + esc(l.to) + "</div></div>" +
       '<div class="when">' + fmtDate(l.date) + " · " + esc(f.airline) + ", " + esc(f.fare) + "</div>" +
     "</div>";
+  const warnings = [];
+  if (f.booked === false && f.notBookedWarning) warnings.push(f.notBookedWarning);
+  if (f.back.warning) warnings.push(f.back.warning);
+
   $("flights").innerHTML = leg(f.out, "Out") + leg(f.back, "Back") +
-    (f.back.warning ? '<div class="pad"><div class="note">' + esc(f.back.warning) + "</div></div>" : "");
+    (warnings.length
+      ? '<div class="pad">' + warnings.map(w => '<div class="note" style="margin-bottom:8px">' +
+          esc(w) + "</div>").join("") + "</div>"
+      : "");
 }
 
 function renderInfo() {
