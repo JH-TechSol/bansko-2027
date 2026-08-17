@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Bansko 2027 — link generator</title>
+<style>
+:root { --bg:#f4f6f9; --panel:#fff; --panel-2:#eef1f6; --ink:#16202e; --ink-soft:#5b6878;
+        --ink-faint:#8b97a6; --line:#dde3ec; --accent:#1f6feb; --ok:#17794a; --ok-bg:#dcf3e6; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#0e141c; --panel:#161e29; --panel-2:#1d2733; --ink:#e7edf5; --ink-soft:#a3b1c2;
+          --ink-faint:#74839a; --line:#26313f; --accent:#5aa2ff; --ok:#6ee7a8; --ok-bg:#133527; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); padding:24px 16px 64px;
+       font:16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+.wrap { max-width:900px; margin:0 auto; }
+h1 { font-size:24px; margin:0 0 4px; letter-spacing:-.02em; }
+.lede { color:var(--ink-soft); margin:0 0 20px; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:16px; }
+label { display:block; font-size:12px; text-transform:uppercase; letter-spacing:.07em;
+        color:var(--ink-faint); font-weight:700; margin-bottom:6px; }
+input[type=text] { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:9px;
+        background:var(--panel-2); color:var(--ink); font:inherit; font-size:14px; }
+button { font:inherit; font-weight:600; font-size:14px; padding:9px 15px; border-radius:9px;
+        border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
+button.ghost { background:transparent; color:var(--accent); }
+button.sm { font-size:12px; padding:5px 10px; }
+.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; }
+table { width:100%; border-collapse:collapse; margin-top:4px; }
+th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); font-size:14px; vertical-align:middle; }
+th { font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-faint); }
+code { font:13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background:var(--panel-2);
+       padding:2px 6px; border-radius:5px; }
+ol { padding-left:20px; } ol li { margin:6px 0; }
+.ok { color:var(--ok); font-weight:600; font-size:13px; }
+.warn { background:var(--panel-2); border-left:3px solid var(--accent); padding:12px 14px;
+        border-radius:0 9px 9px 0; font-size:14px; color:var(--ink-soft); margin-bottom:16px; }
+textarea { width:100%; min-height:90px; padding:10px 12px; border:1px solid var(--line);
+        border-radius:9px; background:var(--panel-2); color:var(--ink); font:13px/1.5 ui-monospace, Menlo, monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Bansko 2027 — link generator</h1>
+<p class="lede">Mints one personal link per person, and writes the WhatsApp message to go with it.</p>
+
+<div class="warn">
+  <strong>Keep this file off the live site.</strong> It lists everyone's keys in one place.
+  Run it locally, or delete it from the host once the links are sent.
+</div>
+
+<div class="card">
+  <label for="csv">Google Sheet CSV URL</label>
+  <input type="text" id="csv" placeholder="https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?...&output=csv">
+  <label for="site" style="margin-top:14px">Site URL</label>
+  <input type="text" id="site" placeholder="https://bansko.jhtechnicalsolutions.co.uk">
+  <div class="row">
+    <button id="go">Load roster and mint keys</button>
+    <button class="ghost" id="useSeed">Use the built-in roster instead</button>
+  </div>
+  <p id="status" style="margin:12px 0 0;font-size:14px;color:var(--ink-soft)"></p>
+</div>
+
+<div id="out"></div>
+
+</div>
+
+<script src="config.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+$("csv").value = CONFIG.sheetCsvUrl || "";
+$("site").value = CONFIG.access.siteUrl || "";
+
+/* Unambiguous alphabet — no 0/O, 1/I/L, so keys survive being read aloud. */
+const ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
+function mintKey(len = 10) {
+  const buf = new Uint8Array(len);
+  crypto.getRandomValues(buf);
+  return Array.from(buf, b => ALPHABET[b % ALPHABET.length]).join("");
+}
+
+function parseCsv(text) {
+  const rows = []; let row = [], field = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i+1] === '"') { field += '"'; i++; } else q = false; } else field += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(field); field = ""; }
+    else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+    else if (c !== "\r") field += c;
+  }
+  if (field !== "" || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim() !== ""));
+}
+
+function toPeople(rows) {
+  const norm = s => s.trim().toLowerCase().replace(/[^a-z]/g, "");
+  const head = rows[0].map(norm);
+  const at = (...n) => { for (const x of n) { const i = head.indexOf(x); if (i !== -1) return i; } return -1; };
+  const iName = at("name"), iKey = at("key","link","code"), iStatus = at("status");
+  if (iName === -1) throw new Error('No "Name" column found in the sheet');
+  return rows.slice(1).map(r => ({
+    name: (r[iName] || "").trim(),
+    key: iKey === -1 ? "" : (r[iKey] || "").trim(),
+    status: (iStatus === -1 ? "" : (r[iStatus] || "")).trim().toLowerCase(),
+  })).filter(p => p.name);
+}
+
+function message(person, url) {
+  return "Bansko 2027 ⛷️\n\n" +
+    person.name.split(" ")[0] + " — here's your page. Flights, costs, what you've paid and what's left:\n" +
+    url + "\n\n" +
+    "It remembers you, so you only need to open it once. Don't forward it — that one's yours.";
+}
+
+function render(people) {
+  const site = ($("site").value || "").trim().replace(/\/+$/, "");
+  let minted = 0;
+  people.forEach(p => { if (!p.key) { p.key = mintKey(); minted++; } });
+
+  const rows = people.map(p => {
+    const url = site + "/?k=" + p.key;
+    return "<tr>" +
+      "<td><strong>" + esc(p.name) + "</strong>" + (p.status ? '<br><span style="color:var(--ink-faint);font-size:12px">' + esc(p.status) + "</span>" : "") + "</td>" +
+      "<td><code>" + esc(p.key) + "</code></td>" +
+      '<td style="word-break:break-all"><a href="' + esc(url) + '">' + esc(url) + "</a></td>" +
+      '<td><button class="sm" data-msg="' + esc(message(p, url)) + '">Copy message</button></td>' +
+    "</tr>";
+  }).join("");
+
+  $("out").innerHTML =
+    '<div class="card">' +
+      "<h3 style='margin:0 0 4px'>Step 1 — paste the keys back into the Sheet</h3>" +
+      "<p style='margin:0 0 10px;color:var(--ink-soft);font-size:14px'>" +
+        (minted ? minted + " new " + (minted === 1 ? "key" : "keys") + " minted. " : "All keys already set. ") +
+        "Copy the column below and paste it into the Sheet's <code>Key</code> column, starting at row 2. " +
+        "Keys must match exactly or the link won't work.</p>" +
+      "<textarea readonly id='keycol'>" + esc(people.map(p => p.key).join("\n")) + "</textarea>" +
+      '<div class="row"><button id="copyCol">Copy the key column</button><span id="colOk" class="ok"></span></div>' +
+    "</div>" +
+    '<div class="card">' +
+      "<h3 style='margin:0 0 10px'>Step 2 — send everyone their link</h3>" +
+      "<table><thead><tr><th>Who</th><th>Key</th><th>Their link</th><th></th></tr></thead><tbody>" +
+      rows + "</tbody></table>" +
+    "</div>";
+
+  $("copyCol").onclick = async () => {
+    await navigator.clipboard.writeText(people.map(p => p.key).join("\n"));
+    $("colOk").textContent = "Copied";
+    setTimeout(() => $("colOk").textContent = "", 2000);
+  };
+  $("out").querySelectorAll("button[data-msg]").forEach(b => {
+    b.onclick = async () => {
+      await navigator.clipboard.writeText(b.dataset.msg);
+      const was = b.textContent; b.textContent = "Copied"; setTimeout(() => b.textContent = was, 1600);
+    };
+  });
+}
+
+$("go").onclick = async () => {
+  const url = ($("csv").value || "").trim();
+  if (!url) { $("status").textContent = "Paste the published CSV URL first."; return; }
+  $("status").textContent = "Loading…";
+  try {
+    const res = await fetch(url + (url.includes("?") ? "&" : "?") + "cb=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const people = toPeople(parseCsv(await res.text()));
+    if (!people.length) throw new Error("No rows found");
+    $("status").textContent = "Loaded " + people.length + " people.";
+    render(people);
+  } catch (e) {
+    $("status").textContent = "Couldn't read the sheet: " + e.message;
+  }
+};
+
+$("useSeed").onclick = () => {
+  const people = CONFIG.seedPeople.map(p => ({ name: p.name, key: "", status: p.status }));
+  $("status").textContent = "Using the built-in roster (" + people.length + " people).";
+  render(people);
+};
+</script>
+</body>
+</html>
