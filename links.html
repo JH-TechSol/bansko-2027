@@ -62,6 +62,20 @@ textarea { width:100%; min-height:90px; padding:10px 12px; border:1px solid var(
     <button class="ghost" id="useSeed">Use the built-in roster instead</button>
   </div>
   <p id="status" style="margin:12px 0 0;font-size:14px;color:var(--ink-soft)"></p>
+
+  <details style="margin-top:14px">
+    <summary style="cursor:pointer;font-size:14px;color:var(--ink-soft)">
+      Fetch blocked? Paste the CSV instead
+    </summary>
+    <p style="font-size:14px;color:var(--ink-soft);margin:10px 0">
+      Opening this file straight off your Mac makes the browser send
+      <code>Origin: null</code>, which the Worker refuses on purpose. Easiest way
+      round it: open the sheet, <strong>Download as CSV</strong>, then paste the
+      contents here.
+    </p>
+    <textarea id="pasted" placeholder="Name,Key,Status,Deposit Paid,Balance Paid,Notes&#10;Jake Hodgson,,confirmed,0,0,Organiser&#10;..."></textarea>
+    <div class="row"><button id="goPaste">Mint keys from this</button></div>
+  </details>
 </div>
 
 <div id="out"></div>
@@ -175,6 +189,19 @@ $("go").onclick = async () => {
     render(people);
   } catch (e) {
     $("status").textContent = "Couldn't read the sheet: " + e.message;
+  }
+};
+
+$("goPaste").onclick = () => {
+  const raw = ($("pasted").value || "").trim();
+  if (!raw) { $("status").textContent = "Paste the CSV into the box first."; return; }
+  try {
+    const people = toPeople(parseCsv(raw));
+    if (!people.length) throw new Error("no rows found");
+    $("status").textContent = "Read " + people.length + " people from the pasted CSV.";
+    render(people);
+  } catch (e) {
+    $("status").textContent = "Couldn't read that: " + e.message;
   }
 };
 
