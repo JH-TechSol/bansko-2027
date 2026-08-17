@@ -35,13 +35,24 @@ const CONFIG = {
     groupSize: 8,          // price is based on 8 — below this the deal changes
   },
 
-  /* --- Money (all £ per person unless stated) --------------------- */
+  /* --- Money (all £ per person unless stated) ---------------------
+     The chalet is handled separately because the operator credit comes
+     off it. Everything else is a line in `extras` — add or remove rows
+     freely (lessons, insurance, whatever) and the page keeps up.        */
   costs: {
     chaletPerHead: 420,
     chaletTotal: 3360,
-    flightsPerHead: 202.24,
-    liftPassPerHead: 295,   // ESTIMATE — confirm before collecting balances
-    liftPassIsEstimate: true,
+    extras: [
+      { label: "Flights",
+        note: "Ryanair PLUS, 20kg",
+        amount: 202.24 },
+      { label: "Lift pass",
+        note: "estimate, buy in resort",
+        amount: 295, estimate: true },
+      { label: "Getting to Liverpool Airport",
+        note: "estimate — minibus from York, split 8 ways",
+        amount: 60, estimate: true },
+    ],
   },
 
   /* --- Operator credit from the cancelled 2026 booking ------------
@@ -106,6 +117,7 @@ const CONFIG = {
   notIncluded: [
     { item: "Lift pass", note: "~£295pp, buy in resort" },
     { item: "Flights", note: "£202.24pp, booked separately" },
+    { item: "Getting to Liverpool Airport", note: "~£60pp, minibus from York" },
     { item: "Lessons", note: "Only if anyone wants them" },
     { item: "Shuttle to mountain top", note: "€8pp/day — not needed in March" },
     { item: "Food on the night off", note: "One evening, eat in town" },
@@ -133,18 +145,19 @@ const CONFIG = {
     ]},
   ],
 
-  /* --- Operator --------------------------------------------------- */
-  contact: {
-    names: "Martin / Milen",
-    company: "Explore Bansko Chalets",
-    email: "enquiries@explore-bansko.com",
-    whatsapp: "+44 7753683704",
-    website: "https://explorebansko-chalets.com/",
-  },
+  /* --- Operator ----------------------------------------------------
+     Martin/Milen's email and phone number are deliberately NOT here.
+     The lads don't need them, and this page shouldn't hand out a
+     supplier's direct contact details. Jake deals with the operator.
+     The only outward link is the chalet page in trip.chaletUrl.        */
 
   /* --- Fallback roster --------------------------------------------
      Used only until sheetCsvUrl is filled in. Same shape as the Sheet.
-     status: confirmed | pending | dropped | unknown                  */
+     status: confirmed | pending | open | dropped | unknown
+       open   = the seat exists and is priced, but nobody's in it yet.
+                Counts towards the 8 for pricing, ignored for money owed.
+       dropped= out entirely. Drops out of the head count, so the chalet
+                re-splits across whoever is left and the price goes up.  */
   seedPeople: [
     { name: "Jake Hodgson",   key: "demo-jake",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "Organiser" },
     { name: "Jake Love",      key: "demo-love",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
@@ -153,6 +166,6 @@ const CONFIG = {
     { name: "Adam",           key: "demo-adam",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
     { name: "Jack",           key: "demo-jack",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
     { name: "James (Primmer)",key: "demo-james", status: "pending",   depositPaid: 0, balancePaid: 0, notes: "Awaiting wife's approval" },
-    { name: "Luke",           key: "demo-luke",  status: "unknown",   depositPaid: 0, balancePaid: 0, notes: "Not responded — may need an 8th" },
+    { name: "8th place",      key: "",           status: "open",      depositPaid: 0, balancePaid: 0, notes: "Seat open — needs a name to hold the £420pp chalet price" },
   ],
 };

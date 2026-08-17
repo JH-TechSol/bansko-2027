@@ -146,6 +146,8 @@ h2 {
 .pill.pending   { background: var(--warn-bg); color: var(--warn); }
 .pill.dropped   { background: var(--bad-bg);  color: var(--bad); }
 .pill.unknown   { background: var(--idle-bg); color: var(--idle); }
+.pill.open      { background: transparent;    color: var(--ink-faint); border: 1px dashed currentColor; }
+.person.open-seat .nm { color: var(--ink-faint); font-style: italic; }
 .owed { font-variant-numeric: tabular-nums; }
 .owed.clear { color: var(--ok); font-weight: 650; }
 
@@ -236,6 +238,7 @@ footer { text-align: center; color: var(--ink-faint); font-size: 12px; padding-t
 
   <section>
     <h2>The chalet</h2>
+    <div id="chaletLink"></div>
     <div class="grid2">
       <div class="card pad">
         <strong>Included</strong>
@@ -251,11 +254,6 @@ footer { text-align: center; color: var(--ink-faint); font-size: 12px; padding-t
   <section>
     <h2>Packing</h2>
     <div class="grid2" id="packing"></div>
-  </section>
-
-  <section>
-    <h2>Operator</h2>
-    <div class="card" id="contact"></div>
   </section>
 
   <footer id="footer">—</footer>
