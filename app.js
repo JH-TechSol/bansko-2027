@@ -1,4 +1,4 @@
-/* Bansko 2027 — renders the page from CONFIG + the Google Sheet. */
+/* Bansko 2027 — renders the page from CONFIG + the Zoho Sheet. */
 
 const $ = id => document.getElementById(id);
 const money = n => "£" + n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -121,20 +121,20 @@ function rowsToPeople(rows) {
 }
 
 async function loadPeople() {
-  if (!CONFIG.sheetCsvUrl) {
+  if (!CONFIG.dataUrl) {
     demoMode = true;
-    banner("info", "Running on the built-in roster, so payments all show £0. Connect the Google Sheet to go live — see README step 3." +
+    banner("info", "Running on the built-in roster, so payments all show £0. Connect the Zoho Sheet to go live — see README step 3." +
       (isLocal ? " The personal-link check is off because this is a local preview." : ""));
     return CONFIG.seedPeople.map(p => ({ ...p }));
   }
   try {
-    const res = await fetch(CONFIG.sheetCsvUrl + (CONFIG.sheetCsvUrl.includes("?") ? "&" : "?") + "cb=" + Date.now());
+    const res = await fetch(CONFIG.dataUrl + (CONFIG.dataUrl.includes("?") ? "&" : "?") + "cb=" + Date.now());
     if (!res.ok) throw new Error("HTTP " + res.status);
     const list = rowsToPeople(parseCsv(await res.text()));
     if (!list.length) throw new Error("Sheet returned no rows");
     return list;
   } catch (err) {
-    banner("warn", "Couldn't read the Google Sheet (" + esc(err.message) + "). Showing the built-in roster instead — payment figures below may be out of date.");
+    banner("warn", "Couldn't read the Zoho Sheet (" + esc(err.message) + "). Showing the built-in roster instead — payment figures below may be out of date.");
     return CONFIG.seedPeople.map(p => ({ ...p }));
   }
 }

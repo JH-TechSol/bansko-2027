@@ -1,15 +1,23 @@
 /* ------------------------------------------------------------------
    BANSKO 2027 — CONFIG
    Everything you might need to change lives in this one file.
-   Payment amounts live in the Google Sheet, not here.
+   Payment amounts live in the Zoho Sheet, not here.
    ------------------------------------------------------------------ */
 
 const CONFIG = {
 
-  /* --- Google Sheet data layer -----------------------------------
-     Paste the "publish to web" CSV URL here. See README.md step 3.
-     Leave empty and the site falls back to SEED_PEOPLE below.       */
-  sheetCsvUrl: "",
+  /* --- Data layer --------------------------------------------------
+     A URL returning the roster as CSV. Built for the published-CSV
+     link from Zoho Sheet (see README step 2), but any URL serving CSV
+     with permissive CORS works.
+
+     The workbook already exists in Jake's WorkDrive private space:
+       Bansko 2027 Payments
+       https://sheet.zoho.eu/sheet/open/bmutud5fb91ec26e640b6851e769a4869a38e
+
+     Leave empty and the site runs on seedPeople below, with the
+     personal-link check still enforced anywhere but localhost.        */
+  dataUrl: "",
 
   /* --- Access ------------------------------------------------------
      Each person gets their own link: <siteUrl>/?k=THEIRKEY
@@ -152,7 +160,7 @@ const CONFIG = {
      The only outward link is the chalet page in trip.chaletUrl.        */
 
   /* --- Fallback roster --------------------------------------------
-     Used only until sheetCsvUrl is filled in. Same shape as the Sheet.
+     Used only until dataUrl is filled in. Same shape as the Sheet.
      status: confirmed | pending | open | dropped | unknown
        open   = the seat exists and is priced, but nobody's in it yet.
                 Counts towards the 8 for pricing, ignored for money owed.

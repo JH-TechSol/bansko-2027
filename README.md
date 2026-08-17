@@ -1,6 +1,6 @@
 # Bansko 2027 — trip tracker
 
-Static site. Payment data lives in a Google Sheet so you can update it from your
+Static site. Payment data lives in a Zoho Sheet so you can update it from your
 phone without touching any files. Everyone gets their own link, which greets them
 by name and shows what they still owe.
 
@@ -9,7 +9,7 @@ index.html    the page everyone sees
 config.js     every number, date and bit of text you'd want to change
 app.js        fetches the Sheet, does the maths, renders the page
 links.html    mints one personal link per person — run locally, don't deploy
-roster-template.csv   import this into Google Sheets to start
+roster-template.csv   import this into the Zoho Sheet to start
 ```
 
 ## How the personal links work
@@ -34,9 +34,13 @@ of the Sheet with SMS or email verification. That is a rebuild, not a setting.
 
 ## Setup — about 10 minutes
 
-### 1. Make the Sheet
-Go to <https://sheets.new>, then **File → Import → Upload** `roster-template.csv`,
-choosing "Replace spreadsheet". Name it `Bansko 2027 Payments`.
+### 1. Fill in the Sheet
+The workbook already exists in your WorkDrive private space:
+
+**Bansko 2027 Payments** — <https://sheet.zoho.eu/sheet/open/bmutud5fb91ec26e640b6851e769a4869a38e>
+
+It's empty. Open it and **File → Import → Upload** `roster-template.csv`, replacing
+the current sheet.
 
 Columns the site reads (header row must exist, order doesn't matter, case doesn't matter):
 
@@ -49,24 +53,34 @@ Columns the site reads (header row must exist, order doesn't matter, case doesn'
 | `Balance Paid` | £ actually received. |
 | `Notes` | Free text, shows under their name |
 
-Anyone marked `dropped` drops out of the head count, and the chalet cost re-splits
-across whoever is left. Mark Luke as `dropped` and the per-head figure jumps from
-£420 to £480 for the chalet — which is exactly the conversation you want to be able
-to show people rather than argue about.
+`Status` values: `confirmed`, `pending`, `open`, `dropped`, `unknown`.
 
-### 2. Publish it
-**File → Share → Publish to web** → pick the sheet tab → format **Comma-separated
-values (.csv)** → **Publish**. Copy the URL it gives you. It looks like:
+- `open` — the seat exists and is priced, but nobody's in it. Counts towards the 8
+  for pricing, ignored for money owed. This is what the "8th place" row uses.
+- `dropped` — out entirely. Drops out of the head count, so the chalet re-splits
+  across whoever is left and the price per head goes up. The page spells the rise
+  out in pounds, which is the conversation you want to be able to show people
+  rather than argue about.
 
-```
-https://docs.google.com/spreadsheets/d/e/2PACX-1vT.../pub?gid=0&single=true&output=csv
-```
+### 2. Publish it as CSV
+In the sheet: **Share → Publish**, publish to the external world, and make sure
+**Allow to export** stays ticked. The publish dialog gives you both a published URL
+and a **downloadable link** — you want the downloadable one, set to CSV.
 
-Publishing makes that CSV readable by anyone with the link. It does **not** make the
-sheet editable, and it does not expose your Drive.
+Publishing makes that CSV readable by anyone with the link. It does not make the
+sheet editable and it doesn't expose the rest of your WorkDrive.
+
+To unpublish later, the same dialog has the switch.
 
 ### 3. Wire it up
-Open `config.js` and paste the URL into `sheetCsvUrl`. That's the only edit needed.
+Open `config.js` and paste the CSV link into `dataUrl`. That's the only edit needed.
+
+**One caveat that has to be tested, not assumed:** the browser can only read that
+CSV if Zoho serves it with a permissive `Access-Control-Allow-Origin` header. If it
+doesn't, the page falls back to the built-in roster and shows a warning banner
+rather than breaking. Load the site once after wiring it up and check the banner is
+gone — that's the test. If CORS does block it, the fallback is to keep the roster in
+this repo and edit it there instead.
 
 ### 4. Host it
 Any static host works — no build step, no server.
@@ -76,8 +90,8 @@ Any static host works — no build step, no server.
 - **GitHub Pages**: push to a repo under JH-TechSol, Settings → Pages → deploy from
   `main`, then point a CNAME at it. Same as the MEC demo.
 
-Google's published-CSV endpoint caches for a few minutes, so a payment you enter now
-shows up on the site within roughly 5 minutes, not instantly.
+Published sheets are cached for a few minutes, so a payment you enter now shows up on
+the site shortly afterwards rather than instantly.
 
 **Don't upload `links.html`** — or delete it from the host once you've sent the links.
 It lists everyone's key on one screen.
