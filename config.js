@@ -127,11 +127,12 @@ const CONFIG = {
       count: 2,
       poundsPerMile: 0.14,
       note: "fuel + parking, split",
-      caveat: "Eight of us and eight bags needs two big estates. Only works because ski hire is included, so no ski bags.",
+      // Worth remembering, though no longer shown on the page: eight people and
+      // eight bags needs two big estates, and only fits because ski hire is
+      // included so nobody carries ski bags.
     },
     minibus: {
       note: "private hire, door to door",
-      caveat: "Dearer, but nobody drives and nobody worries about the last night.",
     },
   },
 

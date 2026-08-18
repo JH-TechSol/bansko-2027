@@ -464,7 +464,8 @@ function renderFlightOptions() {
           (picked ? ' <span class="you">current plan</span>' : "") +
           '<div class="opt-drive">' + esc(c.transfer.drive) + " from York</div></div>" +
         '<div class="opt-price">' + money0(total) +
-          '<div class="opt-sub">' + (diff === 0 ? "cheapest" : "+" + money0(diff)) + "</div></div>" +
+          '<div class="opt-sub">flights + bag + ' + (cars ? "cars" : "minibus") +
+          (diff === 0 ? "" : " · +" + money0(diff)) + "</div></div>" +
       "</div>" +
       '<div class="opt-legs">' +
         '<div><span class="lbl">Out</span> ' + esc(c.out.depart) + " &rarr; " + esc(c.out.arrive) +
@@ -479,17 +480,7 @@ function renderFlightOptions() {
     "</div>";
   }).join("");
 
-  const mode = cars
-    ? t.cars.count + " cars: " + esc(t.cars.caveat)
-    : "Minibus: " + esc(t.minibus.caveat);
-
-  $("flightOptions").innerHTML = cards +
-    '<div class="note info" style="margin-top:12px">' +
-      "Per person: fares for a party of " + CONFIG.trip.groupSize +
-      " (real Ryanair prices, 17 Aug 2026), " + money0(fo.bagPerHead) +
-      " for a 20kg bag both ways, and getting to the airport. " + mode +
-      " <strong>Nothing is booked.</strong>" +
-    "</div>";
+  $("flightOptions").innerHTML = cards;
 }
 
 function renderFlights() {
