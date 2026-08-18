@@ -184,7 +184,8 @@ function transferPerHead(c) {
   return (fuel + parking) / heads;
 }
 
-const optionTotal = c => flightAllIn(c) + transferPerHead(c);
+const countTransport = () => CONFIG.transport && CONFIG.transport.includeInTotal === true;
+const optionTotal = c => flightAllIn(c) + (countTransport() ? transferPerHead(c) : 0);
 
 // Roughly when you'd walk back through your own front door.
 function homeBy(c) {
@@ -200,16 +201,19 @@ function travelRows() {
   if (!c) return [];
   const t = CONFIG.transport;
   const cars = !t || t.chosen === "cars";
-  return [
+  const rows = [
     { label: "Flights",
       note: c.airport + " return, " + CONFIG.flightOptions.bagNote,
       amount: flightAllIn(c), estimate: true },
-    { label: "Getting to " + c.airport,
+  ];
+  if (countTransport()) {
+    rows.push({ label: "Getting to " + c.airport,
       note: cars
         ? t.cars.count + " cars — " + t.cars.note + " " + CONFIG.trip.groupSize + " ways"
         : "minibus from York, split " + CONFIG.trip.groupSize + " ways",
-      amount: transferPerHead(c), estimate: true },
-  ];
+      amount: transferPerHead(c), estimate: true });
+  }
+  return rows;
 }
 
 // Sum of everything that isn't the chalet.
@@ -411,6 +415,14 @@ function renderBreakdown() {
     notes.push(list + " " + (guesses.length === 1 ? "is an estimate" : "are estimates") +
       " rather than a firm quote, so treat the total as close but not final.");
   }
+  const c2 = chosenFlight();
+  if (c2 && !countTransport()) {
+    notes.push("Not counted above: getting to " + esc(c2.airport) + ", roughly " +
+      money0(transferPerHead(c2)) + " each " +
+      (CONFIG.transport.chosen === "cars" ? "sharing two cars" : "on a minibus") +
+      ". We'll settle that nearer the time.");
+  }
+
   $("creditNote").innerHTML = notes.length
     ? '<div class="note info" style="margin-top:12px">' + notes.join(" ") + "</div>" : "";
 }
@@ -464,7 +476,8 @@ function renderFlightOptions() {
           (picked ? ' <span class="you">current plan</span>' : "") +
           '<div class="opt-drive">' + esc(c.transfer.drive) + " from York</div></div>" +
         '<div class="opt-price">' + money0(total) +
-          '<div class="opt-sub">flights + bag + ' + (cars ? "cars" : "minibus") +
+          '<div class="opt-sub">' +
+          (countTransport() ? "flights + bag + " + (cars ? "cars" : "minibus") : "flights + bag") +
           (diff === 0 ? "" : " · +" + money0(diff)) + "</div></div>" +
       "</div>" +
       '<div class="opt-legs">' +
@@ -472,6 +485,10 @@ function renderFlightOptions() {
           ' <span class="est">' + esc(c.out.code) + " · " + money(c.out.fare) + "</span></div>" +
         '<div><span class="lbl">Back</span> ' + esc(c.back.depart) + " &rarr; " + esc(c.back.arrive) +
           ' <span class="est">' + esc(c.back.code) + " · " + money(c.back.fare) + "</span></div>" +
+        (countTransport() ? "" :
+          '<div><span class="lbl">Airport</span> ~' + money0(transferPerHead(c)) +
+          ' <span class="est">each, ' + (cars ? "sharing two cars" : "minibus") +
+          " — not in the price above</span></div>") +
         '<div><span class="lbl">Home</span> <span' + (lateHome ? ' style="color:var(--warn)"' : "") +
           ">~" + homeBy(c) + "</span>" +
           ' <span class="est">' + (cars ? "after driving yourselves" : "minibus drops you off") + "</span></div>" +

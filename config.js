@@ -122,6 +122,11 @@ const CONFIG = {
      Fuel figure is ~45mpg at ~£1.35/litre. Parking is 8 days official
      long stay booked ahead. Both are estimates and parking moves most.  */
   transport: {
+    // Deliberately kept OUT of the headline totals for now — how we get to the
+    // airport isn't decided and the parking figures are soft. It's still worked
+    // out and shown separately so nobody's surprised by it later. Flip this to
+    // true once the plan is settled and it folds into the per-head total.
+    includeInTotal: false,
     chosen: "cars",          // "cars" | "minibus"
     cars: {
       count: 2,
