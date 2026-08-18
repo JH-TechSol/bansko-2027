@@ -42,7 +42,7 @@ row. The Worker already exists, so that's a change rather than a rebuild.
 ### 1. Fill in the Sheet
 The workbook already exists in your WorkDrive private space:
 
-**Bansko 2027 Payments** — <https://sheet.zoho.eu/sheet/open/bmutud5fb91ec26e640b6851e769a4869a38e>
+**Bansko 2027 Payments (live)** — <https://sheet.zoho.eu/sheet/open/pwyueff75bba5b3934854b04be7d522211658>
 
 It's empty. Open it and **File → Import → Upload** `roster-template.csv`, replacing
 the current sheet.

@@ -19,8 +19,10 @@ const CONFIG = {
      Lives in the JHTS Cloudflare account (pinned by account_id in
      worker/wrangler.toml), free tier.
 
-     The sheet itself: Bansko 2027 Payments, in Jake's WorkDrive
-     https://sheet.zoho.eu/sheet/open/bmutud5fb91ec26e640b6851e769a4869a38e
+     The sheet itself: "Bansko 2027 Payments (live)", in Jake's WorkDrive.
+     The original was binned 18 Aug 2026 after its published URL leaked via
+     this repo; that URL is dead and the file ID here is a fresh one.
+     https://sheet.zoho.eu/sheet/open/pwyueff75bba5b3934854b04be7d522211658
 
      Leave empty and the site runs on seedPeople below, with the
      personal-link check still enforced anywhere but localhost.        */
