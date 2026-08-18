@@ -74,42 +74,52 @@ const CONFIG = {
     ],
   },
 
-  /* --- Flight options ----------------------------------------------
-     Nothing is booked. Fares are real Ryanair prices for a party of 8,
-     checked 17 Aug 2026, and they will move.
+  /* --- The flights ---------------------------------------------------
+     Not "which airport do we all use" any more — people are flying from
+     wherever suits them. What matters is the SOFIA end, because the
+     chalet transfer is shared:
 
-     Set `chosen` to an iata code and the whole page follows it — cost
-     breakdown, per-head total, the lot.
+       lands Sofia   BHX 11:25 · EDI 11:30 · STN 12:10   (45 min spread)
+       leaves Sofia  BHX 11:55 · EDI 11:55 · STN 12:35   (40 min spread)
 
-     Ruled out and not shown:
-       Stansted — cheapest at £204pp and a full last day skiing, but it
-         lands 22:35 and puts someone on a 3h20 drive home to ~02:00.
-         Dropped on Jake's call, 18 Aug 2026.
-       Luton — Google Flights advertises a Wizz Air nonstop LTN-SOF, but
-         Wizz's own booking engine has no such service on any date tried.
-       Manchester, Leeds Bradford, Newcastle — no direct Sofia service.  */
+     Each person's airport is the `Airport` column in the Zoho Sheet.
+     `chosen` is only the default for anyone without one set.
+
+     Ruled out for not fitting the Sofia times: Gatwick (lands 13:50,
+     returns 14:40), Heathrow (returns 10:40, an hour before everyone),
+     and the cheap Stansted evening flights (land 20:50 / 23:10).
+     Luton looks ideal on Google but Wizz's booking engine denies the
+     route exists. Manchester, Leeds Bradford, Newcastle: no direct.
+
+     Fares are basic, checked 17-18 Aug 2026, and will move.            */
   flightOptions: {
     chosen: "BHX",
-    // 20kg check-in bag, both ways. Ryanair publish £18.99–£59.99 per
-    // flight depending on route and date; ~£37 each way fits this route.
     bagPerHead: 75,
     bagNote: "20kg hold bag, both ways",
     choices: [
-      {
-        iata: "LPL", airport: "Liverpool",
-        out:  { code: "FR6338", depart: "08:05", arrive: "13:25", fare: 57.74 },
-        back: { code: "FR6337", depart: "06:00", arrive: "07:40", fare: 69.99 },
-        transfer: { miles: 105, drive: "2h 00m", driveHours: 2.0,
-                    parkingPerCar: 60, minibusPerHead: 60 },
-        verdict: "Nearest airport, but the worst of both ends: 01:00 chalet pickup, then a drive home on no sleep.",
-      },
       {
         iata: "BHX", airport: "Birmingham",
         out:  { code: "FR6336", depart: "06:15", arrive: "11:25", fare: 57.84 },
         back: { code: "FR6335", depart: "11:55", arrive: "13:25", fare: 57.84 },
         transfer: { miles: 130, drive: "2h 20m", driveHours: 2.33,
                     parkingPerCar: 75, minibusPerHead: 75 },
-        verdict: "The only one where both ends work. Early start out, but home in daylight and not wrecked.",
+        verdict: "The York contingent. Early start, but home in daylight.",
+      },
+      {
+        iata: "EDI", airport: "Edinburgh",
+        out:  { code: "FR5160", depart: "06:00", arrive: "11:30", fare: 79.99 },
+        back: { code: "FR5161", depart: "11:55", arrive: "13:45", fare: 100.99 },
+        transfer: { miles: 0, drive: "local", driveHours: 0,
+                    parkingPerCar: 0, minibusPerHead: 0 },
+        verdict: "Matt. Lands five minutes after Birmingham and leaves Sofia at the same time.",
+      },
+      {
+        iata: "STN", airport: "London Stansted",
+        out:  { code: "FR2690", depart: "07:05", arrive: "12:10", fare: 88.04 },
+        back: { code: "FR2691", depart: "12:35", arrive: "13:55", fare: 77.54 },
+        transfer: { miles: 0, drive: "local", driveHours: 0,
+                    parkingPerCar: 0, minibusPerHead: 0 },
+        verdict: "Jack. The morning pair — the cheap Stansted flights land hours after everyone else.",
       },
     ],
   },

@@ -115,6 +115,7 @@ function rowsToPeople(rows) {
   const iDep = col("depositpaid", "deposit");
   const iBal = col("balancepaid", "balance");
   const iNotes = col("notes", "note");
+  const iAirport = col("airport", "from", "flyingfrom");
   if (iName === -1) throw new Error('Sheet has no "Name" column');
 
   return rows.slice(1).map(r => ({
@@ -124,6 +125,7 @@ function rowsToPeople(rows) {
     depositPaid: iDep === -1 ? 0 : num(r[iDep]),
     balancePaid: iBal === -1 ? 0 : num(r[iBal]),
     notes: iNotes === -1 ? "" : (r[iNotes] || "").trim(),
+    airport: iAirport === -1 ? "" : (r[iAirport] || "").trim().toUpperCase(),
   })).filter(p => p.name);
 }
 
@@ -165,10 +167,15 @@ const openSeats = () => people.filter(p => p.status === "open").length;
    Travel cost follows whichever airport is picked in flightOptions.chosen,
    so the breakdown can never drift from the option on show. */
 
-const chosenFlight = () => {
+// Everyone flies from wherever suits them; the Sofia times are what line up.
+// Pass a person to get their flight, or nothing for the default.
+const flightFor = person => {
   const fo = CONFIG.flightOptions;
-  return fo && fo.choices.find(c => c.iata === fo.chosen);
+  if (!fo) return null;
+  const want = (person && person.airport) || fo.chosen;
+  return fo.choices.find(c => c.iata === want) || fo.choices.find(c => c.iata === fo.chosen);
 };
+const chosenFlight = () => flightFor(me);
 
 const flightFare = c => c.out.fare + c.back.fare;
 const flightAllIn = c => flightFare(c) + CONFIG.flightOptions.bagPerHead;
@@ -196,8 +203,8 @@ function homeBy(c) {
 }
 
 // Flights + airport run, as breakdown rows.
-function travelRows() {
-  const c = chosenFlight();
+function travelRows(person) {
+  const c = flightFor(person === undefined ? me : person);
   if (!c) return [];
   const t = CONFIG.transport;
   const cars = !t || t.chosen === "cars";
@@ -217,8 +224,8 @@ function travelRows() {
 }
 
 // Sum of everything that isn't the chalet.
-const extrasTotal = () =>
-  [...CONFIG.costs.extras, ...travelRows()].reduce((s, x) => s + x.amount, 0);
+const extrasTotal = person =>
+  [...CONFIG.costs.extras, ...travelRows(person)].reduce((s, x) => s + x.amount, 0);
 
 // Chalet cost per person. It's a flat per-person rate, so headcount doesn't
 // change it — only how thinly the operator credit spreads.
@@ -233,7 +240,7 @@ function chaletShare() {
 // Pass a person to get their individual figure; pass nothing for the standard head.
 function totalFor(person) {
   const cr = CONFIG.credit;
-  const gross = chaletShare() + extrasTotal();
+  const gross = chaletShare() + extrasTotal(person);
   // "jake" mode: the whole credit comes off the beneficiary's balance, not just
   // their chalet share, so a credit larger than £420 isn't thrown away.
   if (creditView === "jake" && person && person.name === cr.beneficiary) {
@@ -293,7 +300,14 @@ function renderStats() {
   const open = openSeats();
 
   $("stats").innerHTML = [
-    ["Per head", money0(totalFor(null)), "all in, est."],
+    (() => {
+      const totals = payers().map(totalFor);
+      const lo = totals.length ? Math.min(...totals) : totalFor(null);
+      const hi = totals.length ? Math.max(...totals) : totalFor(null);
+      return Math.round(hi - lo) < 1
+        ? ["Per head", money0(lo), "all in, est."]
+        : ["Per head", money0(lo) + "–" + money0(hi), "varies by airport"];
+    })(),
     ["Confirmed", inCount + " of " + CONFIG.trip.groupSize,
       inCount >= CONFIG.trip.groupSize ? "full"
         : open ? open + (open === 1 ? " seat" : " seats") + " open"
@@ -318,6 +332,10 @@ function renderPeople() {
     if (!noMoney) {
       bits.push("Paid " + money(paid) + " of " + money(total));
       bits.push(owed === 0 ? "settled up" : money(owed) + " to go");
+    }
+    if (p.airport && !noMoney) {
+      const f = flightFor(p);
+      if (f) bits.push("flying from " + esc(f.airport));
     }
     if (p.notes) bits.push(esc(p.notes));
 
@@ -393,7 +411,8 @@ function renderBreakdown() {
     rows.push([esc(x.label) + (x.note ? " <span class='est'>" + esc(x.note) + "</span>" : ""), money(x.amount)]);
   });
 
-  const totalRow = '<tr class="total"><td>Total per head</td><td class="num">' + money(totalFor(null)) + "</td></tr>";
+  const totalRow = '<tr class="total"><td>' + (me ? "Your total" : "Total per head") +
+    '</td><td class="num">' + money(totalFor(me)) + "</td></tr>";
 
   $("breakdown").innerHTML =
     "<thead><tr><th>Item</th><th class='num'>Per person</th></tr></thead><tbody>" +
@@ -430,7 +449,7 @@ function renderBreakdown() {
 function renderSchedule() {
   if (!$("schedule")) return;
   const s = CONFIG.schedule;
-  const balance = Math.max(totalFor(null) - s.depositPerHead, 0);
+  const balance = Math.max(totalFor(me) - s.depositPerHead, 0);
   $("schedule").innerHTML = [
     ["Deposit", money(s.depositPerHead) + " by " + fmtShort(s.depositDue)],
     ["Balance", money(balance) + " by " + fmtShort(s.balanceDue)],
