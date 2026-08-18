@@ -165,19 +165,43 @@ const chosenFlight = () => {
 
 const flightFare = c => c.out.fare + c.back.fare;
 const flightAllIn = c => flightFare(c) + CONFIG.flightOptions.bagPerHead;
-const optionTotal = c => flightAllIn(c) + c.transferPerHead;
+
+// Getting to the airport, per person, under the chosen transport mode.
+// Two cars: fuel there and back for each car, plus parking, split across us.
+function transferPerHead(c) {
+  const t = CONFIG.transport;
+  const heads = Math.max(CONFIG.trip.groupSize, 1);
+  if (!t || t.chosen === "minibus") return c.transfer.minibusPerHead;
+  const fuel = t.cars.count * c.transfer.miles * 2 * t.cars.poundsPerMile;
+  const parking = t.cars.count * c.transfer.parkingPerCar;
+  return (fuel + parking) / heads;
+}
+
+const optionTotal = c => flightAllIn(c) + transferPerHead(c);
+
+// Roughly when you'd walk back through your own front door.
+function homeBy(c) {
+  const [h, m] = c.back.arrive.split(":").map(Number);
+  const mins = h * 60 + m + Math.round((c.transfer.driveHours || 0) * 60);
+  const d = Math.floor(mins / 60) % 24;
+  return String(d).padStart(2, "0") + ":" + String(mins % 60).padStart(2, "0");
+}
 
 // Flights + airport run, as breakdown rows.
 function travelRows() {
   const c = chosenFlight();
   if (!c) return [];
+  const t = CONFIG.transport;
+  const cars = !t || t.chosen === "cars";
   return [
     { label: "Flights",
       note: c.airport + " return, " + CONFIG.flightOptions.bagNote,
       amount: flightAllIn(c), estimate: true },
     { label: "Getting to " + c.airport,
-      note: "estimate — minibus from York, split " + CONFIG.trip.groupSize + " ways",
-      amount: c.transferPerHead, estimate: true },
+      note: cars
+        ? t.cars.count + " cars — " + t.cars.note + " " + CONFIG.trip.groupSize + " ways"
+        : "minibus from York, split " + CONFIG.trip.groupSize + " ways",
+      amount: transferPerHead(c), estimate: true },
   ];
 }
 
@@ -387,22 +411,41 @@ function renderSchedule() {
   ].map(([k, v]) => '<div class="kv"><span>' + k + "</span><span>" + v + "</span></div>").join("");
 }
 
+function renderTransportToggle() {
+  const t = CONFIG.transport;
+  if (!t) { $("transportToggle").innerHTML = ""; return; }
+
+  const opts = [
+    ["cars", t.cars.count + " cars, parked"],
+    ["minibus", "Minibus"],
+  ];
+  $("transportToggle").innerHTML = opts.map(([v, label]) =>
+    '<button data-mode="' + v + '" aria-pressed="' + (t.chosen === v) + '">' +
+    esc(label) + "</button>").join("");
+  $("transportToggle").querySelectorAll("button").forEach(b =>
+    b.addEventListener("click", () => { CONFIG.transport.chosen = b.dataset.mode; renderAll(); }));
+}
+
 function renderFlightOptions() {
   const fo = CONFIG.flightOptions;
   if (!fo || !fo.choices.length) { $("flightOptions").innerHTML = ""; return; }
 
+  const t = CONFIG.transport;
+  const cars = !t || t.chosen === "cars";
   const cheapest = Math.min(...fo.choices.map(optionTotal));
 
   const cards = fo.choices.map(c => {
     const picked = c.iata === fo.chosen;
     const total = optionTotal(c);
     const diff = total - cheapest;
+    const back = parseInt(homeBy(c).split(":")[0], 10);
+    const lateHome = back >= 23 || back < 6;
 
     return '<div class="opt' + (picked ? " picked" : "") + '">' +
       '<div class="opt-head">' +
         "<div><strong>" + esc(c.airport) + "</strong>" +
           (picked ? ' <span class="you">current plan</span>' : "") +
-          '<div class="opt-drive">' + esc(c.drive) + "</div></div>" +
+          '<div class="opt-drive">' + esc(c.transfer.drive) + " from York</div></div>" +
         '<div class="opt-price">' + money0(total) +
           '<div class="opt-sub">' + (diff === 0 ? "cheapest" : "+" + money0(diff)) + "</div></div>" +
       "</div>" +
@@ -411,17 +454,24 @@ function renderFlightOptions() {
           ' <span class="est">' + esc(c.out.code) + " · " + money(c.out.fare) + "</span></div>" +
         '<div><span class="lbl">Back</span> ' + esc(c.back.depart) + " &rarr; " + esc(c.back.arrive) +
           ' <span class="est">' + esc(c.back.code) + " · " + money(c.back.fare) + "</span></div>" +
+        '<div><span class="lbl">Home</span> <span' + (lateHome ? ' style="color:var(--warn)"' : "") +
+          ">~" + homeBy(c) + "</span>" +
+          ' <span class="est">' + (cars ? "after driving yourselves" : "minibus drops you off") + "</span></div>" +
       "</div>" +
       '<div class="opt-verdict">' + esc(c.verdict) + "</div>" +
     "</div>";
   }).join("");
 
+  const mode = cars
+    ? t.cars.count + " cars: " + esc(t.cars.caveat)
+    : "Minibus: " + esc(t.minibus.caveat);
+
   $("flightOptions").innerHTML = cards +
     '<div class="note info" style="margin-top:12px">' +
-      "Totals are per person: fares for a party of " + CONFIG.trip.groupSize +
-      " (real Ryanair prices, checked 17 Aug 2026) plus " + money0(fo.bagPerHead) +
-      " for a 20kg bag both ways, plus the minibus from York. " +
-      "<strong>Nothing is booked</strong> — fares move, and eight seats going at once is what pushes them up." +
+      "Per person: fares for a party of " + CONFIG.trip.groupSize +
+      " (real Ryanair prices, 17 Aug 2026), " + money0(fo.bagPerHead) +
+      " for a 20kg bag both ways, and getting to the airport. " + mode +
+      " <strong>Nothing is booked.</strong>" +
     "</div>";
 }
 
@@ -541,6 +591,7 @@ function renderAll() {
   renderBreakdown();
   renderSchedule();
   renderFlights();
+  renderTransportToggle();
   renderFlightOptions();
   renderRooms();
   renderInfo();

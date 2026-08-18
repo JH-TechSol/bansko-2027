@@ -73,11 +73,16 @@ const CONFIG = {
   },
 
   /* --- Flight options ----------------------------------------------
-     Nothing is booked. Fares below are real Ryanair prices for a party
-     of 8, checked 17 Aug 2026, and they will move.
+     Nothing is booked. Fares are real Ryanair prices for a party of 8,
+     checked 17 Aug 2026, and they will move.
 
      Set `chosen` to an iata code and the whole page follows it — cost
-     breakdown, per-head total, the lot.                                */
+     breakdown, per-head total, the lot.
+
+     Luton was investigated and ruled out: Google Flights advertises a
+     Wizz Air nonstop LTN-SOF, but Wizz's own booking engine has no such
+     service on any date tried. Manchester, Leeds Bradford and Newcastle
+     have no direct Sofia service at all.                                */
   flightOptions: {
     chosen: "LPL",
     // 20kg check-in bag, both ways. Ryanair publish £18.99–£59.99 per
@@ -86,27 +91,51 @@ const CONFIG = {
     bagNote: "20kg hold bag, both ways",
     choices: [
       {
-        iata: "LPL", airport: "Liverpool", drive: "1h 45m from York",
+        iata: "LPL", airport: "Liverpool",
         out:  { code: "FR6338", depart: "08:05", arrive: "13:25", fare: 57.74 },
         back: { code: "FR6337", depart: "06:00", arrive: "07:40", fare: 69.99 },
-        transferPerHead: 60,
-        verdict: "Nearest airport, but the worst schedule. 01:00 chalet pickup on the way home.",
+        transfer: { miles: 105, drive: "2h 00m", driveHours: 2.0,
+                    parkingPerCar: 60, minibusPerHead: 60 },
+        verdict: "Nearest airport, but the worst of both ends: 01:00 chalet pickup, then a drive home on no sleep.",
       },
       {
-        iata: "BHX", airport: "Birmingham", drive: "2h 30m from York",
+        iata: "BHX", airport: "Birmingham",
         out:  { code: "FR6336", depart: "06:15", arrive: "11:25", fare: 57.84 },
         back: { code: "FR6335", depart: "11:55", arrive: "13:25", fare: 57.84 },
-        transferPerHead: 75,
-        verdict: "Civilised trip home, but a 01:30 start from York on the way out.",
+        transfer: { miles: 130, drive: "2h 20m", driveHours: 2.33,
+                    parkingPerCar: 75, minibusPerHead: 75 },
+        verdict: "The only one where both ends work. Early start out, but home in daylight and not wrecked.",
       },
       {
-        iata: "STN", airport: "London Stansted", drive: "3h 30m from York",
+        iata: "STN", airport: "London Stansted",
         out:  { code: "FR8515", depart: "15:45", arrive: "20:50", fare: 43.89 },
         back: { code: "FR8516", depart: "21:15", arrive: "22:35", fare: 50.44 },
-        transferPerHead: 110,
-        verdict: "Best schedule by a mile — a lie-in on the way out and a full last day on the mountain. Longest drive.",
+        transfer: { miles: 185, drive: "3h 20m", driveHours: 3.33,
+                    parkingPerCar: 85, minibusPerHead: 110 },
+        verdict: "Cheapest flights and a full last day skiing — but the longest drive, at the end of a late night.",
       },
     ],
+  },
+
+  /* --- Getting to the airport --------------------------------------
+     Two cars works out much cheaper than a minibus, but it puts someone
+     behind the wheel after the flight — which matters more at Stansted
+     (lands 22:35) than at Birmingham (lands 13:25).
+
+     Fuel figure is ~45mpg at ~£1.35/litre. Parking is 8 days official
+     long stay booked ahead. Both are estimates and parking moves most.  */
+  transport: {
+    chosen: "cars",          // "cars" | "minibus"
+    cars: {
+      count: 2,
+      poundsPerMile: 0.14,
+      note: "fuel + parking, split",
+      caveat: "Eight of us and eight bags needs two big estates. Only works because ski hire is included, so no ski bags.",
+    },
+    minibus: {
+      note: "private hire, door to door",
+      caveat: "Dearer, but nobody drives and nobody worries about the last night.",
+    },
   },
 
   /* --- Operator credit from the cancelled 2026 booking ------------
