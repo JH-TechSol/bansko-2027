@@ -26,6 +26,13 @@ const STORE_KEY = "bansko2027.key";
 // On a real host the check always applies, so an unconfigured deploy is never open.
 const isLocal = ["localhost", "127.0.0.1", "[::1]", ""].includes(location.hostname);
 
+// A page can opt out of the personal-link check by setting window.BANSKO_PUBLIC
+// before this script loads. Such a page must show nothing personal — so it also
+// never fetches the roster, rather than merely not displaying it. Loading it and
+// hiding it would leave names, balances and keys sitting in memory for anyone
+// who opened dev tools.
+const isPublicPage = window.BANSKO_PUBLIC === true;
+
 function readStoredKey() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
@@ -611,6 +618,12 @@ function renderAll() {
 }
 
 (async function init() {
+  if (isPublicPage) {
+    people = [];               // deliberately never loaded — see isPublicPage
+    renderAll();
+    return;
+  }
+
   people = await loadPeople();
   me = resolveMe();
   if (CONFIG.access.requireKey && !(demoMode && isLocal) && !me) { renderHeader(); renderGate(); return; }

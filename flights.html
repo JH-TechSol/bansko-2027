@@ -225,7 +225,8 @@ footer { text-align: center; color: var(--ink-faint); font-size: 12px; padding-t
 
 <div class="wrap">
 
-  <p style="margin:0 0 20px"><a href="./">&larr; Back to the trip page</a></p>
+  <p style="margin:0 0 20px"><a href="./">&larr; Back to the trip page</a>
+    <span class="est"> — that one needs your personal link</span></p>
 
   <div id="banner"></div>
 
@@ -249,6 +250,12 @@ footer { text-align: center; color: var(--ink-faint); font-size: 12px; padding-t
   <footer id="footer">—</footer>
 </div>
 
+<script>
+  // Open to anyone with the link: this page shows only flight options and
+  // prices, nothing about who's going or who has paid. app.js therefore skips
+  // both the personal-link check and the roster fetch entirely.
+  window.BANSKO_PUBLIC = true;
+</script>
 <script src="config.js"></script>
 <script src="app.js"></script>
 </body>
