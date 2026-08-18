@@ -89,7 +89,7 @@ const CONFIG = {
          Wizz's own booking engine has no such service on any date tried.
        Manchester, Leeds Bradford, Newcastle — no direct Sofia service.  */
   flightOptions: {
-    chosen: "LPL",
+    chosen: "BHX",
     // 20kg check-in bag, both ways. Ryanair publish £18.99–£59.99 per
     // flight depending on route and date; ~£37 each way fits this route.
     bagPerHead: 75,
