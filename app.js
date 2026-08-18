@@ -64,7 +64,7 @@ function renderGate() {
       "Yours came over WhatsApp — open that one and this page will remember you on this phone.</p>" +
       "<p style='margin:0;color:var(--ink-soft)'>Lost it? Give Jake a shout and he'll send it again.</p>" +
     "</div>";
-  $("banner").innerHTML = "";
+  if ($("banner")) $("banner").innerHTML = "";
 }
 
 /* ---------- CSV ---------- */
@@ -235,6 +235,7 @@ function totalFor(person) {
 
 function renderHeader() {
   const t = CONFIG.trip;
+  if (!$("title")) return;
   $("title").textContent = t.name;
   $("subtitle").textContent = t.chalet + ", " + t.operator + " · " + fmtDate(t.startDate) + " – " + fmtDate(t.endDate);
   const days = Math.ceil((new Date(t.startDate + "T00:00:00") - new Date()) / 86400000);
@@ -244,6 +245,7 @@ function renderHeader() {
 
 function renderMe() {
   const el = $("me");
+  if (!el) return;
   if (!me) { el.innerHTML = ""; return; }
 
   const s = CONFIG.schedule;
@@ -272,6 +274,7 @@ function renderMe() {
 }
 
 function renderStats() {
+  if (!$("stats")) return;
   const inCount = people.filter(p => p.status === "confirmed").length;
   const paid = payers().reduce((s, p) => s + p.depositPaid + p.balancePaid, 0);
   const due = payers().reduce((s, p) => s + totalFor(p), 0);
@@ -292,6 +295,7 @@ function renderStats() {
 }
 
 function renderPeople() {
+  if (!$("people")) return;
   $("people").innerHTML = people.map(p => {
     const total = totalFor(p);
     const paid = p.depositPaid + p.balancePaid;
@@ -323,6 +327,7 @@ function renderPeople() {
 
 // What an unfilled seat actually costs everyone else, in pounds.
 function renderSpotsNote() {
+  if (!$("spotsNote")) return;
   const c = CONFIG.costs;
   const open = openSeats();
   const filled = payers().length;
@@ -348,6 +353,7 @@ function renderSpotsNote() {
 }
 
 function renderCreditToggle() {
+  if (!$("creditToggle")) return;
   const cr = CONFIG.credit;
   if (cr.mode !== "both") { $("creditToggle").innerHTML = ""; return; }
   const opts = [
@@ -363,6 +369,7 @@ function renderCreditToggle() {
 }
 
 function renderBreakdown() {
+  if (!$("breakdown")) return;
   const c = CONFIG.costs, cr = CONFIG.credit;
   const heads = Math.max(counted().length, 1);
   const rows = [];
@@ -402,6 +409,7 @@ function renderBreakdown() {
 }
 
 function renderSchedule() {
+  if (!$("schedule")) return;
   const s = CONFIG.schedule;
   const balance = Math.max(totalFor(null) - s.depositPerHead, 0);
   $("schedule").innerHTML = [
@@ -412,6 +420,7 @@ function renderSchedule() {
 }
 
 function renderTransportToggle() {
+  if (!$("transportToggle")) return;
   const t = CONFIG.transport;
   if (!t) { $("transportToggle").innerHTML = ""; return; }
 
@@ -427,6 +436,7 @@ function renderTransportToggle() {
 }
 
 function renderFlightOptions() {
+  if (!$("flightOptions")) return;
   const fo = CONFIG.flightOptions;
   if (!fo || !fo.choices.length) { $("flightOptions").innerHTML = ""; return; }
 
@@ -476,6 +486,7 @@ function renderFlightOptions() {
 }
 
 function renderFlights() {
+  if (!$("flights")) return;
   const f = CONFIG.flights, t = CONFIG.trip;
   const c = chosenFlight();
   if (!c) { $("flights").innerHTML = ""; return; }
@@ -513,6 +524,7 @@ function renderFlights() {
 }
 
 function renderRooms() {
+  if (!$("rooms")) return;
   const r = CONFIG.rooms;
   if (!r || !r.list.length) { $("rooms").innerHTML = ""; return; }
 
@@ -558,6 +570,7 @@ function renderRooms() {
 }
 
 function renderInfo() {
+  if (!$("included")) return;
   const t = CONFIG.trip;
   $("chaletLink").innerHTML =
     '<div class="card pad" style="margin-bottom:12px">' +
@@ -578,7 +591,7 @@ function renderInfo() {
     '<div class="card pad"><strong>' + esc(g.group) + "</strong><ul class='plain'>" +
     g.items.map(i => "<li>" + esc(i) + "</li>").join("") + "</ul></div>").join("");
 
-  $("footer").textContent = "Updated " + new Date().toLocaleString("en-GB",
+  if ($("footer")) $("footer").textContent = "Updated " + new Date().toLocaleString("en-GB",
     { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Bansko 2027</title>
+<title>Bansko 2027 — Airports</title>
 <style>
 :root {
   --bg:        #f4f6f9;
@@ -225,70 +225,25 @@ footer { text-align: center; color: var(--ink-faint); font-size: 12px; padding-t
 
 <div class="wrap">
 
+  <p style="margin:0 0 20px"><a href="./">&larr; Back to the trip page</a></p>
+
   <div id="banner"></div>
-  <div id="me"></div>
 
   <section>
-    <div class="stats" id="stats"></div>
+    <h2>Which airport — not decided yet</h2>
+    <p style="margin:0 0 12px;color:var(--ink-soft)">
+      Two airports in the running. They're within a few quid of each other, so
+      it comes down to what time you want to leave and what time you want to be
+      home. Flip between driving ourselves and a minibus to see what each does
+      to the price.
+    </p>
+    <div class="toggle" id="transportToggle"></div>
+    <div id="flightOptions"></div>
   </section>
 
   <section>
-    <h2>Who's going</h2>
-    <div class="card" id="people"></div>
-    <div id="spotsNote"></div>
-  </section>
-
-  <section>
-    <h2>Cost per head</h2>
-    <div class="toggle" id="creditToggle"></div>
-    <div class="card"><table id="breakdown"></table></div>
-    <div id="creditNote"></div>
-  </section>
-
-  <section>
-    <h2>Paying</h2>
-    <div class="card" id="schedule"></div>
-  </section>
-
-  <section>
-    <h2>Flights</h2>
+    <h2>The flights as they stand</h2>
     <div class="card" id="flights"></div>
-  </section>
-
-  <section>
-    <div class="card pad">
-      <strong>Which airport?</strong>
-      <p style="margin:4px 0 10px;color:var(--ink-soft);font-size:14px">
-        Not settled yet — two options, a few quid apart, with very different
-        start and finish times.
-      </p>
-      <a href="flights.html">Compare the airports &rarr;</a>
-    </div>
-  </section>
-
-  <section>
-    <h2>Rooms and beds</h2>
-    <div id="rooms"></div>
-  </section>
-
-  <section>
-    <h2>The chalet</h2>
-    <div id="chaletLink"></div>
-    <div class="grid2">
-      <div class="card pad">
-        <strong>Included</strong>
-        <ul class="plain" id="included"></ul>
-      </div>
-      <div class="card pad">
-        <strong>Not included</strong>
-        <ul class="plain" id="notIncluded"></ul>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>Packing</h2>
-    <div class="grid2" id="packing"></div>
   </section>
 
   <footer id="footer">—</footer>

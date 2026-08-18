@@ -79,10 +79,13 @@ const CONFIG = {
      Set `chosen` to an iata code and the whole page follows it — cost
      breakdown, per-head total, the lot.
 
-     Luton was investigated and ruled out: Google Flights advertises a
-     Wizz Air nonstop LTN-SOF, but Wizz's own booking engine has no such
-     service on any date tried. Manchester, Leeds Bradford and Newcastle
-     have no direct Sofia service at all.                                */
+     Ruled out and not shown:
+       Stansted — cheapest at £204pp and a full last day skiing, but it
+         lands 22:35 and puts someone on a 3h20 drive home to ~02:00.
+         Dropped on Jake's call, 18 Aug 2026.
+       Luton — Google Flights advertises a Wizz Air nonstop LTN-SOF, but
+         Wizz's own booking engine has no such service on any date tried.
+       Manchester, Leeds Bradford, Newcastle — no direct Sofia service.  */
   flightOptions: {
     chosen: "LPL",
     // 20kg check-in bag, both ways. Ryanair publish £18.99–£59.99 per
@@ -105,14 +108,6 @@ const CONFIG = {
         transfer: { miles: 130, drive: "2h 20m", driveHours: 2.33,
                     parkingPerCar: 75, minibusPerHead: 75 },
         verdict: "The only one where both ends work. Early start out, but home in daylight and not wrecked.",
-      },
-      {
-        iata: "STN", airport: "London Stansted",
-        out:  { code: "FR8515", depart: "15:45", arrive: "20:50", fare: 43.89 },
-        back: { code: "FR8516", depart: "21:15", arrive: "22:35", fare: 50.44 },
-        transfer: { miles: 185, drive: "3h 20m", driveHours: 3.33,
-                    parkingPerCar: 85, minibusPerHead: 110 },
-        verdict: "Cheapest flights and a full last day skiing — but the longest drive, at the end of a late night.",
       },
     ],
   },
