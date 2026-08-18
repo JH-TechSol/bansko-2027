@@ -177,6 +177,13 @@ const flightFor = person => {
 };
 const chosenFlight = () => flightFor(me);
 
+// Jake books some airports and collects for them; everyone else books their own.
+function flightViaJake(person) {
+  const fo = CONFIG.flightOptions;
+  const f = flightFor(person);
+  return !!(f && fo.bookedByJake && fo.bookedByJake.includes(f.iata));
+}
+
 const flightFare = c => c.out.fare + c.back.fare;
 const flightAllIn = c => flightFare(c) + CONFIG.flightOptions.bagPerHead;
 
@@ -211,10 +218,11 @@ function travelRows(person) {
   const rows = [
     { label: "Flights",
       note: c.airport + " return, " + CONFIG.flightOptions.bagNote,
-      amount: flightAllIn(c), estimate: true },
+      amount: flightAllIn(c), estimate: true,
+      viaJake: flightViaJake(person === undefined ? me : person) },
   ];
   if (countTransport()) {
-    rows.push({ label: "Getting to " + c.airport,
+    rows.push({ viaJake: false, label: "Getting to " + c.airport,
       note: cars
         ? t.cars.count + " cars — " + t.cars.note + " " + CONFIG.trip.groupSize + " ways"
         : "minibus from York, split " + CONFIG.trip.groupSize + " ways",
@@ -249,6 +257,23 @@ function totalFor(person) {
   return gross;
 }
 
+// Everything for the trip, however it gets paid.
+const allRows = person => [...CONFIG.costs.extras, ...travelRows(person)];
+
+// What this person actually hands to Jake — the only thing the sheet tracks.
+function owedToJake(person) {
+  const cr = CONFIG.credit;
+  let sum = chaletShare();
+  if (creditView === "jake" && person && person.name === cr.beneficiary) {
+    sum = Math.max(sum + 0 - cr.amount, 0);
+  }
+  return allRows(person).reduce((a, x) => a + (x.viaJake ? x.amount : 0), sum);
+}
+
+// What they pay for themselves — lift pass, and their own flights if they booked them.
+const ownSpend = person =>
+  allRows(person).reduce((a, x) => a + (x.viaJake ? 0 : x.amount), 0);
+
 /* ---------- render ---------- */
 
 function renderHeader() {
@@ -267,7 +292,7 @@ function renderMe() {
   if (!me) { el.innerHTML = ""; return; }
 
   const s = CONFIG.schedule;
-  const total = totalFor(me);
+  const total = owedToJake(me);
   const paid = me.depositPaid + me.balancePaid;
   const owed = Math.max(total - paid, 0);
   const depOwed = Math.max(s.depositPerHead - me.depositPaid, 0);
@@ -287,7 +312,8 @@ function renderMe() {
       '<div class="me-due">' + due + "</div>" +
       '<div class="bar" style="margin-top:12px"><i class="' + (pct >= 100 ? "" : "part") +
         '" style="width:' + pct.toFixed(1) + '%"></i></div>' +
-      '<div class="me-sum">Paid ' + money(paid) + " of " + money(total) + "</div>" +
+      '<div class="me-sum">Paid ' + money(paid) + " of " + money(total) + " to Jake" +
+        " · about " + money0(ownSpend(me)) + " more you'll pay yourself</div>" +
     "</div>";
 }
 
@@ -295,24 +321,24 @@ function renderStats() {
   if (!$("stats")) return;
   const inCount = people.filter(p => p.status === "confirmed").length;
   const paid = payers().reduce((s, p) => s + p.depositPaid + p.balancePaid, 0);
-  const due = payers().reduce((s, p) => s + totalFor(p), 0);
+  const due = payers().reduce((s, p) => s + owedToJake(p), 0);
   const outstanding = Math.max(due - paid, 0);
   const open = openSeats();
 
   $("stats").innerHTML = [
     (() => {
-      const totals = payers().map(totalFor);
+      const totals = payers().map(owedToJake);
       const lo = totals.length ? Math.min(...totals) : totalFor(null);
       const hi = totals.length ? Math.max(...totals) : totalFor(null);
       return Math.round(hi - lo) < 1
-        ? ["Per head", money0(lo), "all in, est."]
-        : ["Per head", money0(lo) + "–" + money0(hi), "varies by airport"];
+        ? ["Owed to Jake", money0(lo), "each"]
+        : ["Owed to Jake", money0(lo) + "–" + money0(hi), "differs — some book own flights"];
     })(),
     ["Confirmed", inCount + " of " + CONFIG.trip.groupSize,
       inCount >= CONFIG.trip.groupSize ? "full"
         : open ? open + (open === 1 ? " seat" : " seats") + " open"
         : (CONFIG.trip.groupSize - inCount) + " still to lock in"],
-    ["Collected", money0(paid), "of " + money0(due)],
+    ["Collected", money0(paid), "of " + money0(due) + " owed to Jake"],
     ["Outstanding", money0(outstanding), outstanding === 0 ? "all square" : "still to come in"],
   ].map(([k, v, n]) =>
     '<div class="stat"><div class="k">' + k + '</div><div class="v">' + v + '</div><div class="n">' + n + "</div></div>"
@@ -322,7 +348,7 @@ function renderStats() {
 function renderPeople() {
   if (!$("people")) return;
   $("people").innerHTML = people.map(p => {
-    const total = totalFor(p);
+    const total = owedToJake(p);
     const paid = p.depositPaid + p.balancePaid;
     const owed = Math.max(total - paid, 0);
     const pct = total > 0 ? Math.min((paid / total) * 100, 100) : 0;
@@ -366,13 +392,23 @@ function renderSpotsNote() {
   const shortfall = CONFIG.trip.groupSize - filled;
 
   if (shortfall > 0) {
+    // Martin charges for 8 whoever turns up. Anything not covered by a paying
+    // head is money Jake is out of pocket, so say so in pounds.
+    const owedToOperator = c.chaletTotal - CONFIG.credit.amount;
+    const covered = filled * chaletShare();
+    const gap = Math.max(owedToOperator - covered, 0);
+
     $("spotsNote").innerHTML = '<div class="note" style="margin-top:12px">' +
       "<strong>" + shortfall + " more " + (shortfall === 1 ? "person" : "people") +
-      " needed.</strong> " + esc(CONFIG.trip.operator) + " won't run the chalet below " +
-      CONFIG.trip.groupSize + ". The price is " + money(c.chaletPerHead) +
-      " each whatever the numbers, so nobody pays more if we're short — " +
-      "we just don't go. Extra people beyond " + CONFIG.trip.groupSize +
-      " don't make it cheaper either." +
+      " needed.</strong> " + esc(CONFIG.trip.operator) + " charges for " +
+      CONFIG.trip.groupSize + " however many of us go, and the price is " +
+      money(c.chaletPerHead) + " each either way — so nobody else pays more. " +
+      (gap > 0
+        ? "But " + money(gap) + " of the chalet isn't covered by anyone, and Jake " +
+          "is carrying it until the " + (shortfall === 1 ? "last seat is" : "seats are") +
+          " filled. Split across the " + filled + " of us that's " +
+          money(gap / filled) + " each."
+        : "") +
       "</div>";
     return;
   }
@@ -407,12 +443,23 @@ function renderBreakdown() {
   if (creditView === "split" && cr.amount > 0) {
     rows.push(["Operator credit, split " + heads + " ways", "&minus;" + money(cr.amount / heads)]);
   }
-  [...c.extras, ...travelRows()].forEach(x => {
+  allRows(me).filter(x => x.viaJake).forEach(x => {
     rows.push([esc(x.label) + (x.note ? " <span class='est'>" + esc(x.note) + "</span>" : ""), money(x.amount)]);
   });
 
-  const totalRow = '<tr class="total"><td>' + (me ? "Your total" : "Total per head") +
-    '</td><td class="num">' + money(totalFor(me)) + "</td></tr>";
+  const own = allRows(me).filter(x => !x.viaJake);
+  const totalRow =
+    '<tr class="total"><td>' + (me ? "You pay Jake" : "Paid to Jake") +
+      '</td><td class="num">' + money(owedToJake(me)) + "</td></tr>" +
+    (own.length
+      ? '<tr><td colspan="2" style="padding-top:14px;font-size:11px;text-transform:uppercase;' +
+        'letter-spacing:.07em;color:var(--ink-faint);font-weight:700">You sort yourself</td></tr>' +
+        own.map(x => "<tr><td>" + esc(x.label) +
+          (x.note ? " <span class='est'>" + esc(x.note) + "</span>" : "") +
+          '</td><td class="num">' + money(x.amount) + "</td></tr>").join("") +
+        '<tr class="total"><td>Whole trip, roughly</td><td class="num">' +
+          money(owedToJake(me) + ownSpend(me)) + "</td></tr>"
+      : "");
 
   $("breakdown").innerHTML =
     "<thead><tr><th>Item</th><th class='num'>Per person</th></tr></thead><tbody>" +
@@ -449,7 +496,7 @@ function renderBreakdown() {
 function renderSchedule() {
   if (!$("schedule")) return;
   const s = CONFIG.schedule;
-  const balance = Math.max(totalFor(me) - s.depositPerHead, 0);
+  const balance = Math.max(owedToJake(me) - s.depositPerHead, 0);
   $("schedule").innerHTML = [
     ["Deposit", money(s.depositPerHead) + " by " + fmtShort(s.depositDue)],
     ["Balance", money(balance) + " by " + fmtShort(s.balanceDue)],

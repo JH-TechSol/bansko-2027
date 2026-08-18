@@ -70,7 +70,7 @@ const CONFIG = {
     extras: [
       { label: "Lift pass",
         note: "estimate, buy in resort",
-        amount: 295, estimate: true },
+        amount: 295, estimate: true, viaJake: false },
     ],
   },
 
@@ -94,6 +94,10 @@ const CONFIG = {
      Fares are basic, checked 17-18 Aug 2026, and will move.            */
   flightOptions: {
     chosen: "BHX",
+    // Jake books the Birmingham seats and collects for them. Matt (EDI) and
+    // Jack (STN) book their own, so their flights are their own spend and must
+    // not appear in what they owe Jake.
+    bookedByJake: ["BHX"],
     bagPerHead: 75,
     bagNote: "20kg hold bag, both ways",
     choices: [
