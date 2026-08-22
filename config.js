@@ -101,13 +101,23 @@ const CONFIG = {
     // Jack (STN) book their own, so their flights are their own spend and must
     // not appear in what they owe Jake.
     bookedByJake: ["BHX"],
+    // Birmingham is a real Ryanair quote from the checkout screen, 21 Aug 2026:
+    // 6 x Adult Plus, £592.98 out + £607.98 back less a £13.02 Plus discount =
+    // £1,187.94, i.e. £197.99 each. Plus includes the 20kg check-in bag and a
+    // small bag, so there is nothing to add — hence bagPerHead 0.
+    // Edinburgh and Stansted are still basic fares and DO need a bag adding;
+    // they're kept for reference only, nobody is on them.
+    // Only applies to fares that DON'T already include a bag. Birmingham is a
+    // Plus fare with the 20kg bag in it (quoted: true), so it's skipped there.
     bagPerHead: 75,
     bagNote: "20kg hold bag, both ways",
+    bagNoteQuoted: "20kg bag included in the Plus fare",
     choices: [
       {
         iata: "BHX", airport: "Birmingham",
-        out:  { code: "FR6336", depart: "06:15", arrive: "11:25", fare: 57.84 },
-        back: { code: "FR6335", depart: "11:55", arrive: "13:25", fare: 57.84 },
+        out:  { code: "FR6336", depart: "06:15", arrive: "11:25", fare: 98.83 },
+        back: { code: "FR6335", depart: "11:55", arrive: "13:25", fare: 99.16 },
+        quoted: true,   // real checkout price, not an estimate
         transfer: { miles: 130, drive: "2h 20m", driveHours: 2.33,
                     parkingPerCar: 75, minibusPerHead: 75 },
         verdict: "The York contingent. Early start, but home in daylight.",
@@ -176,24 +186,39 @@ const CONFIG = {
     beneficiary: "Jake Hodgson",
   },
 
-  /* --- Payment schedule -------------------------------------------
-     What the OPERATOR wants (confirmed by Martin, 17 Aug 2026):
-       30% of £3,360 ≈ £1,000 deposit, less the £600 credit = £400 now.
-       Final balance 2 weeks before arrival, i.e. by 20 Feb 2027.
-       Paid in EUR by bank transfer. Bank details are deliberately NOT in
-       this file — they must not end up on a public page. They're in
-       Martin's email of 17 Aug 2026.
+  /* --- Payment schedule -----------------------------------------------
+     Martin's hard deadline is the balance 2 weeks before arrival:
+     20 Feb 2027. Everything here is built backwards from that with
+     deliberate slack, because chasing seven people takes weeks.
 
-     What JAKE collects from everyone is set below, and is his own call. */
+     After the deposit everyone owes the same £295 — the rest of their
+     chalet share — whether or not Jake booked their flight.
+
+     Stage amounts are what's due AT that point. The last stage is
+     whatever remains, so it always adds up even if figures move.        */
   schedule: {
-    // Set to cover what Jake actually pays out now: Martin's £400 deposit
-    // (30% of £3,360 less the £600 credit) split 8 ways = £50, plus the
-    // Birmingham seat for anyone whose flight Jake is booking.
-    // Jack books his own, so he only owes the £50.
+    // Deposit = Martin's £400 split over the 8 the chalet is priced on,
+    // plus the seat for anyone whose flight Jake books.
     depositPerHead: 50,
-    depositFlights: true,        // add their flight if Jake is booking it
+    depositFlights: true,
     depositDue: "2026-09-30",
-    balanceDue: "2027-02-20",   // operator's deadline: 2 weeks before arrival
+
+    stages: [
+      { label: "Deposit",
+        due: "2026-09-30",
+        amount: null,              // computed per person
+        why: "Pays Martin's £400 and buys the Birmingham seats before fares climb." },
+      { label: "Second payment",
+        due: "2026-11-30",
+        amount: 150,
+        why: "Before Christmas on purpose — nobody wants a ski bill in January." },
+      { label: "Balance",
+        due: "2027-01-31",
+        amount: null,              // whatever's left
+        why: "Three weeks before Martin's deadline, so there's room to chase." },
+    ],
+
+    operatorDeadline: "2027-02-20",
     payTo: "Bank transfer to Jake — ask him for details",
   },
 

@@ -184,7 +184,7 @@ const legFor = (person, leg) => {
   if (!fo) return null;
   const want = airportFor(person, leg);
   const c = fo.choices.find(x => x.iata === want) || fo.choices.find(x => x.iata === fo.chosen);
-  return c ? { ...c[leg], airport: c.airport, iata: c.iata } : null;
+  return c ? { ...c[leg], airport: c.airport, iata: c.iata, quoted: !!c.quoted } : null;
 };
 
 // Someone flying out of one airport and back into another has no single
@@ -209,7 +209,7 @@ function flightViaJake(person) {
 }
 
 const flightFare = c => c.out.fare + c.back.fare;
-const flightAllIn = c => flightFare(c) + CONFIG.flightOptions.bagPerHead;
+const flightAllIn = c => flightFare(c) + (c.quoted ? 0 : CONFIG.flightOptions.bagPerHead);
 
 // Getting to the airport, per person, under the chosen transport mode.
 // Two cars: fuel there and back for each car, plus parking, split across us.
@@ -247,10 +247,13 @@ function travelRows(person) {
       return {
         label: "Flights",
         note: (openJaw ? "out of " + o.airport + ", back to " + b.airport
-                       : o.airport + " return") + ", " + CONFIG.flightOptions.bagNote +
+                       : o.airport + " return") + ", " +
+              (o && o.quoted ? CONFIG.flightOptions.bagNoteQuoted
+                             : CONFIG.flightOptions.bagNote) +
               (openJaw ? " — two one-ways, price them yourself" : ""),
-        amount: (o ? o.fare : 0) + (b ? b.fare : 0) + CONFIG.flightOptions.bagPerHead,
-        estimate: true,
+        amount: (o ? o.fare : 0) + (b ? b.fare : 0) +
+                (o && o.quoted ? 0 : CONFIG.flightOptions.bagPerHead),
+        estimate: !(o && o.quoted),
         viaJake: flightViaJake(who),
       };
     })(),
@@ -331,11 +334,28 @@ function renderMe() {
   const owed = Math.max(total - paid, 0);
   const depOwed = Math.max(depositFor(me) - me.depositPaid, 0);
 
-  // Next thing this person actually has to do.
+  // Next thing this person actually has to do: the first stage they haven't
+  // fully covered, so the card always names one concrete payment.
   let action, due;
-  if (owed === 0) { action = "You're all square"; due = "Nothing left to pay. See you at the airport."; }
-  else if (depOwed > 0) { action = money(depOwed) + " deposit"; due = "due by " + fmtShort(s.depositDue); }
-  else { action = money(owed) + " balance"; due = "due by " + fmtShort(s.balanceDue); }
+  if (owed === 0) {
+    action = "You're all square";
+    due = "Nothing left to pay. See you at the airport.";
+  } else {
+    let left = paid, next = null;
+    for (const st of stagesFor(me)) {
+      if (st.amount <= 0) continue;
+      if (left >= st.amount - 0.005) { left -= st.amount; continue; }
+      next = { ...st, amount: st.amount - left };
+      break;
+    }
+    if (next) {
+      action = money(next.amount) + " " + next.label.toLowerCase();
+      due = "due by " + fmtShort(next.due);
+    } else {
+      action = money(owed) + " left";
+      due = "due by " + fmtShort(CONFIG.schedule.operatorDeadline);
+    }
+  }
 
   const pct = total > 0 ? Math.min((paid / total) * 100, 100) : 0;
 
@@ -543,17 +563,54 @@ function depositFor(person) {
   return d;
 }
 
+// Each stage as a real figure for this person. A null amount on the final stage
+// means "whatever is still outstanding", so the stages always sum to the total.
+function stagesFor(person) {
+  const sc = CONFIG.schedule;
+  const total = owedToJake(person);
+  const list = sc.stages || [];
+  let run = 0;
+  return list.map((st, i) => {
+    const last = i === list.length - 1;
+    let amt;
+    if (st.amount !== null && st.amount !== undefined) amt = st.amount;
+    else if (i === 0) amt = depositFor(person);
+    else amt = 0;
+    if (last) amt = Math.max(total - run, 0);
+    amt = Math.min(amt, Math.max(total - run, 0));
+    run += amt;
+    return { ...st, amount: amt, runningLeft: Math.max(total - run, 0) };
+  });
+}
+
 function renderSchedule() {
   if (!$("schedule")) return;
-  const s = CONFIG.schedule;
-  const dep = depositFor(me);
-  const balance = Math.max(owedToJake(me) - dep, 0);
-  $("schedule").innerHTML = [
-    ["Deposit", money(dep) + " by " + fmtShort(s.depositDue) +
-      (flightViaJake(me) ? " — covers your flight" : "")],
-    ["Balance", money(balance) + " by " + fmtShort(s.balanceDue)],
-    ["How", esc(s.payTo)],
-  ].map(([k, v]) => '<div class="kv"><span>' + k + "</span><span>" + v + "</span></div>").join("");
+  const sc = CONFIG.schedule;
+  const stages = stagesFor(me);
+  const today = new Date();
+  let paidSoFar = me ? me.depositPaid + me.balancePaid : 0;
+
+  $("schedule").innerHTML =
+    stages.map(st => {
+      const covered = Math.min(paidSoFar, st.amount);
+      paidSoFar -= covered;
+      const settled = covered >= st.amount - 0.005 && st.amount > 0;
+      const overdue = !settled && new Date(st.due + "T12:00:00") < today && st.amount > 0;
+      return '<div class="kv"><span>' + esc(st.label) +
+        '<div class="est">' + esc(st.why) + "</div></span>" +
+        '<span style="text-align:right;white-space:nowrap">' +
+          (settled ? '<span style="color:var(--ok)">' + money(st.amount) + " ✓</span>"
+                   : money(st.amount)) +
+          '<div class="est"' + (overdue ? ' style="color:var(--warn);font-weight:600"' : "") +
+          ">by " + fmtShort(st.due) + (overdue ? " — overdue" : "") + "</div>" +
+        "</span></div>";
+    }).join("") +
+    '<div class="kv"><span>How</span><span>' + esc(sc.payTo) + "</span></div>" +
+    (sc.operatorDeadline
+      ? '<div class="kv"><span>Why that last date<div class="est">Jake has to pay ' +
+        esc(CONFIG.trip.operator) + " in full by then</div></span><span>" +
+        fmtShort(sc.operatorDeadline) + "</span></div>"
+      : "");
 }
 
 function renderTransportToggle() {
