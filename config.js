@@ -187,34 +187,37 @@ const CONFIG = {
   },
 
   /* --- Payment schedule -----------------------------------------------
-     Martin's hard deadline is the balance 2 weeks before arrival:
-     20 Feb 2027. Everything here is built backwards from that with
-     deliberate slack, because chasing seven people takes weeks.
+     Staged so Jake is never far out of pocket, and worked backwards from
+     Martin's hard deadline — the chalet balance 2 weeks before arrival,
+     20 Feb 2027 — with slack, because chasing seven people takes weeks.
 
-     After the deposit everyone owes the same £295 — the rest of their
-     chalet share — whether or not Jake booked their flight.
+     Stage 1 is the flight only. It exists to put the £1,187.94 Ryanair
+     bill in Jake's account before he pays it. Anyone booking their own
+     seat owes nothing at this stage.
 
-     Stage amounts are what's due AT that point. The last stage is
-     whatever remains, so it always adds up even if figures move.        */
+     Jake still fronts Martin's £400 deposit himself; that comes back in
+     stages 2 and 3, which split the £345 chalet share.
+
+     A null amount means "computed": stage 1 is their flight, and the last
+     stage is whatever remains, so the stages always sum to the total even
+     if a fare moves.                                                      */
   schedule: {
-    // Deposit = Martin's £400 split over the 8 the chalet is priced on,
-    // plus the seat for anyone whose flight Jake books.
-    depositPerHead: 50,
+    depositPerHead: 0,        // no chalet money in stage 1 — flights only
     depositFlights: true,
     depositDue: "2026-09-30",
 
     stages: [
-      { label: "Deposit",
+      { label: "Your flight",
         due: "2026-09-30",
-        amount: null,              // computed per person
-        why: "Pays Martin's £400 and buys the Birmingham seats before fares climb." },
-      { label: "Second payment",
+        amount: null,
+        why: "Covers your seat so the six can be booked before the fare climbs. Booking your own? Nothing due here." },
+      { label: "Chalet, first half",
         due: "2026-11-30",
-        amount: 150,
+        amount: 175,
         why: "Before Christmas on purpose — nobody wants a ski bill in January." },
-      { label: "Balance",
+      { label: "Chalet, balance",
         due: "2027-01-31",
-        amount: null,              // whatever's left
+        amount: null,
         why: "Three weeks before Martin's deadline, so there's room to chase." },
     ],
 

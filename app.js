@@ -594,13 +594,15 @@ function renderSchedule() {
     stages.map(st => {
       const covered = Math.min(paidSoFar, st.amount);
       paidSoFar -= covered;
-      const settled = covered >= st.amount - 0.005 && st.amount > 0;
-      const overdue = !settled && new Date(st.due + "T12:00:00") < today && st.amount > 0;
+      const nothingDue = st.amount <= 0.005;
+      const settled = !nothingDue && covered >= st.amount - 0.005;
+      const overdue = !settled && !nothingDue && new Date(st.due + "T12:00:00") < today;
       return '<div class="kv"><span>' + esc(st.label) +
         '<div class="est">' + esc(st.why) + "</div></span>" +
         '<span style="text-align:right;white-space:nowrap">' +
-          (settled ? '<span style="color:var(--ok)">' + money(st.amount) + " ✓</span>"
-                   : money(st.amount)) +
+          (nothingDue ? '<span class="est">nothing due</span>'
+            : settled ? '<span style="color:var(--ok)">' + money(st.amount) + " ✓</span>"
+            : money(st.amount)) +
           '<div class="est"' + (overdue ? ' style="color:var(--warn);font-weight:600"' : "") +
           ">by " + fmtShort(st.due) + (overdue ? " — overdue" : "") + "</div>" +
         "</span></div>";
