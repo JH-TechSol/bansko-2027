@@ -116,6 +116,8 @@ function rowsToPeople(rows) {
   const iBal = col("balancepaid", "balance");
   const iNotes = col("notes", "note");
   const iAirport = col("airport", "from", "flyingfrom");
+  const iBackAirport = col("returnairport", "backairport", "returnto", "back");
+  const iFlightsBy = col("flightsby", "flightsbookedby", "bookedby");
   if (iName === -1) throw new Error('Sheet has no "Name" column');
 
   return rows.slice(1).map(r => ({
@@ -126,6 +128,8 @@ function rowsToPeople(rows) {
     balancePaid: iBal === -1 ? 0 : num(r[iBal]),
     notes: iNotes === -1 ? "" : (r[iNotes] || "").trim(),
     airport: iAirport === -1 ? "" : (r[iAirport] || "").trim().toUpperCase(),
+    backAirport: iBackAirport === -1 ? "" : (r[iBackAirport] || "").trim().toUpperCase(),
+    flightsBy: iFlightsBy === -1 ? "" : (r[iFlightsBy] || "").trim().toLowerCase(),
   })).filter(p => p.name);
 }
 
@@ -169,17 +173,37 @@ const openSeats = () => people.filter(p => p.status === "open").length;
 
 // Everyone flies from wherever suits them; the Sofia times are what line up.
 // Pass a person to get their flight, or nothing for the default.
+const airportFor = (person, leg) => {
+  const fo = CONFIG.flightOptions;
+  if (leg === "back" && person && person.backAirport) return person.backAirport;
+  return (person && person.airport) || fo.chosen;
+};
+
+const legFor = (person, leg) => {
+  const fo = CONFIG.flightOptions;
+  if (!fo) return null;
+  const want = airportFor(person, leg);
+  const c = fo.choices.find(x => x.iata === want) || fo.choices.find(x => x.iata === fo.chosen);
+  return c ? { ...c[leg], airport: c.airport, iata: c.iata } : null;
+};
+
+// Someone flying out of one airport and back into another has no single
+// "their airport" — this is the outbound one, used where a single label is needed.
 const flightFor = person => {
   const fo = CONFIG.flightOptions;
   if (!fo) return null;
-  const want = (person && person.airport) || fo.chosen;
+  const want = airportFor(person, "out");
   return fo.choices.find(c => c.iata === want) || fo.choices.find(c => c.iata === fo.chosen);
 };
 const chosenFlight = () => flightFor(me);
 
-// Jake books some airports and collects for them; everyone else books their own.
+// Who books the seat, and therefore who collects for it. Taken from the sheet's
+// "Flights By" column where set — it's a fact about the arrangement, not something
+// to infer from the airport. Matt flies out of Birmingham with everyone but books
+// his own, so airport alone would get him wrong.
 function flightViaJake(person) {
   const fo = CONFIG.flightOptions;
+  if (person && person.flightsBy) return person.flightsBy === "jake";
   const f = flightFor(person);
   return !!(f && fo.bookedByJake && fo.bookedByJake.includes(f.iata));
 }
@@ -216,10 +240,20 @@ function travelRows(person) {
   const t = CONFIG.transport;
   const cars = !t || t.chosen === "cars";
   const rows = [
-    { label: "Flights",
-      note: c.airport + " return, " + CONFIG.flightOptions.bagNote,
-      amount: flightAllIn(c), estimate: true,
-      viaJake: flightViaJake(person === undefined ? me : person) },
+    (() => {
+      const who = person === undefined ? me : person;
+      const o = legFor(who, "out"), b = legFor(who, "back");
+      const openJaw = o && b && o.iata !== b.iata;
+      return {
+        label: "Flights",
+        note: (openJaw ? "out of " + o.airport + ", back to " + b.airport
+                       : o.airport + " return") + ", " + CONFIG.flightOptions.bagNote +
+              (openJaw ? " — two one-ways, price them yourself" : ""),
+        amount: (o ? o.fare : 0) + (b ? b.fare : 0) + CONFIG.flightOptions.bagPerHead,
+        estimate: true,
+        viaJake: flightViaJake(who),
+      };
+    })(),
   ];
   if (countTransport()) {
     rows.push({ viaJake: false, label: "Getting to " + c.airport,
@@ -360,8 +394,12 @@ function renderPeople() {
       bits.push(owed === 0 ? "settled up" : money(owed) + " to go");
     }
     if (p.airport && !noMoney) {
-      const f = flightFor(p);
-      if (f) bits.push("flying from " + esc(f.airport));
+      const po = legFor(p, "out"), pb = legFor(p, "back");
+      if (po && pb) {
+        bits.push(po.iata === pb.iata
+          ? "flying from " + esc(po.airport)
+          : "out of " + esc(po.airport) + ", back to " + esc(pb.airport));
+      }
     }
     if (p.notes) bits.push(esc(p.notes));
 
@@ -569,8 +607,9 @@ function renderFlightOptions() {
 function renderFlights() {
   if (!$("flights")) return;
   const f = CONFIG.flights, t = CONFIG.trip;
-  const c = chosenFlight();
-  if (!c) { $("flights").innerHTML = ""; return; }
+  const o = legFor(me, "out"), b = legFor(me, "back");
+  if (!o || !b) { $("flights").innerHTML = ""; return; }
+  const c = flightFor(me);
 
   const leg = (l, label, date, from, to) =>
     '<div class="flight">' +
@@ -582,22 +621,29 @@ function renderFlights() {
       '<div class="when">' + fmtDate(date) + " · " + esc(f.airline) + ", " + esc(f.fare) + "</div>" +
     "</div>";
 
-  const here = c.airport + " (" + c.iata + ")";
   const there = "Sofia (SOF)";
+  const outFrom = o.airport + " (" + o.iata + ")";
+  const backTo  = b.airport + " (" + b.iata + ")";
 
   const warnings = [];
   if (f.booked === false && f.notBookedWarning) warnings.push(f.notBookedWarning);
 
   // A pre-09:00 flight home means leaving the chalet in the middle of the night.
-  const backHour = parseInt(c.back.depart.split(":")[0], 10);
+  const backHour = parseInt(b.depart.split(":")[0], 10);
   if (backHour < 9) {
     warnings.push(c.back.depart + " departure — chalet pickup around " +
       String((backHour + 19) % 24).padStart(2, "0") + ":00. Pack the night before.");
   }
 
+  if (o.iata !== b.iata) {
+    warnings.unshift("Out of " + o.airport + " with everyone, back into " + b.airport +
+      ". That's two one-way tickets rather than a return, so price it before booking — " +
+      "Ryanair one-ways aren't always half a return.");
+  }
+
   $("flights").innerHTML =
-    leg(c.out, "Out", t.startDate, here, there) +
-    leg(c.back, "Back", t.endDate, there, here) +
+    leg(o, "Out", t.startDate, outFrom, there) +
+    leg(b, "Back", t.endDate, there, backTo) +
     (warnings.length
       ? '<div class="pad">' + warnings.map(w => '<div class="note" style="margin-bottom:8px">' +
           esc(w) + "</div>").join("") + "</div>"

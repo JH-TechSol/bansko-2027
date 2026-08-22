@@ -94,6 +94,9 @@ const CONFIG = {
      Fares are basic, checked 17-18 Aug 2026, and will move.            */
   flightOptions: {
     chosen: "BHX",
+    // Airport / Return Airport columns in the sheet. Leave Return Airport blank
+    // for a normal return; set it to fly home somewhere else (Matt: out of BHX
+    // with the group, back to EDI).
     // Jake books the Birmingham seats and collects for them. Matt (EDI) and
     // Jack (STN) book their own, so their flights are their own spend and must
     // not appear in what they owe Jake.
@@ -115,7 +118,9 @@ const CONFIG = {
         back: { code: "FR5161", depart: "11:55", arrive: "13:45", fare: 100.99 },
         transfer: { miles: 0, drive: "local", driveHours: 0,
                     parkingPerCar: 0, minibusPerHead: 0 },
-        verdict: "Matt. Lands five minutes after Birmingham and leaves Sofia at the same time.",
+        // Matt flies OUT of Birmingham with everyone and only comes back here.
+        // FR5161 leaves Sofia at 11:55, the same minute as the Birmingham flight.
+        verdict: "Matt's way home. Leaves Sofia the same minute as the Birmingham flight.",
       },
       {
         iata: "STN", airport: "London Stansted",
