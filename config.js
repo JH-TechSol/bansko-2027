@@ -120,7 +120,10 @@ const CONFIG = {
                     parkingPerCar: 0, minibusPerHead: 0 },
         // Matt flies OUT of Birmingham with everyone and only comes back here.
         // FR5161 leaves Sofia at 11:55, the same minute as the Birmingham flight.
-        verdict: "Matt's way home. Leaves Sofia the same minute as the Birmingham flight.",
+        // Matt reverted to flying both ways with the group, 21 Aug 2026, so
+        // nobody is on this now. Kept because it's the only Sofia-Edinburgh
+        // flight that day and it leaves at 11:55, same as Birmingham.
+        verdict: "Only Sofia-Edinburgh flight that day. Nobody on it now.",
       },
       {
         iata: "STN", airport: "London Stansted",
@@ -183,7 +186,12 @@ const CONFIG = {
 
      What JAKE collects from everyone is set below, and is his own call. */
   schedule: {
-    depositPerHead: 100,
+    // Set to cover what Jake actually pays out now: Martin's £400 deposit
+    // (30% of £3,360 less the £600 credit) split 8 ways = £50, plus the
+    // Birmingham seat for anyone whose flight Jake is booking.
+    // Jack books his own, so he only owes the £50.
+    depositPerHead: 50,
+    depositFlights: true,        // add their flight if Jake is booking it
     depositDue: "2026-09-30",
     balanceDue: "2027-02-20",   // operator's deadline: 2 weeks before arrival
     payTo: "Bank transfer to Jake — ask him for details",

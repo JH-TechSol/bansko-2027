@@ -329,7 +329,7 @@ function renderMe() {
   const total = owedToJake(me);
   const paid = me.depositPaid + me.balancePaid;
   const owed = Math.max(total - paid, 0);
-  const depOwed = Math.max(s.depositPerHead - me.depositPaid, 0);
+  const depOwed = Math.max(depositFor(me) - me.depositPaid, 0);
 
   // Next thing this person actually has to do.
   let action, due;
@@ -531,12 +531,26 @@ function renderBreakdown() {
     ? '<div class="note info" style="margin-top:12px">' + notes.join(" ") + "</div>" : "";
 }
 
+// The deposit covers what Jake is out of pocket up front: his share of Martin's
+// chalet deposit, plus the flight for anyone whose seat Jake is booking.
+function depositFor(person) {
+  const s = CONFIG.schedule;
+  let d = s.depositPerHead;
+  if (s.depositFlights && flightViaJake(person)) {
+    const row = travelRows(person).find(x => x.label === "Flights");
+    if (row) d += row.amount;
+  }
+  return d;
+}
+
 function renderSchedule() {
   if (!$("schedule")) return;
   const s = CONFIG.schedule;
-  const balance = Math.max(owedToJake(me) - s.depositPerHead, 0);
+  const dep = depositFor(me);
+  const balance = Math.max(owedToJake(me) - dep, 0);
   $("schedule").innerHTML = [
-    ["Deposit", money(s.depositPerHead) + " by " + fmtShort(s.depositDue)],
+    ["Deposit", money(dep) + " by " + fmtShort(s.depositDue) +
+      (flightViaJake(me) ? " — covers your flight" : "")],
     ["Balance", money(balance) + " by " + fmtShort(s.balanceDue)],
     ["How", esc(s.payTo)],
   ].map(([k, v]) => '<div class="kv"><span>' + k + "</span><span>" + v + "</span></div>").join("");
