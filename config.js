@@ -57,12 +57,23 @@ const CONFIG = {
      off it. Everything else is a line in `extras` — add or remove rows
      freely (lessons, insurance, whatever) and the page keeps up.        */
   costs: {
-    // £420 PER PERSON, not a fixed pot to be divided. Martin, 6 Oct 2025:
+    // £ PER PERSON, not a fixed pot to be divided. Martin, 6 Oct 2025:
     // "prices go down and are calculated per person not a set amount. The
-    // minimum required group size is 8." So more people does not make it
-    // cheaper, and fewer than 8 isn't a price rise — it's no booking.
-    chaletPerHead: 420,
-    chaletTotal: 3360,   // display only: 420 x 8
+    // minimum required group size is 8."
+    //
+    // And 21 Aug 2026: "You can add more guests at any point in time. Up to 15
+    // guests, price per person doesn't change, however if you get at least 12
+    // guests we can knock down £20.00 pp and make the price £400.00 pp."
+    //
+    // So the rate is tiered. Note the credit is a fixed £600 however many go,
+    // so it thins with every extra head — which is why 9 to 11 people is worse
+    // for everyone than either 8 or 12. See chaletRateFor() in app.js.
+    chaletPerHead: 420,          // the rate below the discount threshold
+    chaletTiers: [
+      { minPeople: 12, perHead: 400 },
+    ],
+    maxPeople: 15,               // Martin's ceiling
+    chaletTotal: 3360,           // display only: 420 x 8
 
     // Non-travel extras only. Flights and the airport run are derived from
     // whichever option is picked in `flightOptions` below, so the breakdown

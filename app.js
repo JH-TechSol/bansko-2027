@@ -272,14 +272,24 @@ function travelRows(person) {
 const extrasTotal = person =>
   [...CONFIG.costs.extras, ...travelRows(person)].reduce((s, x) => s + x.amount, 0);
 
-// Chalet cost per person. It's a flat per-person rate, so headcount doesn't
-// change it — only how thinly the operator credit spreads.
+// Martin's rate drops at 12+, so the headline price depends on the headcount.
+function chaletRateFor(heads) {
+  const c = CONFIG.costs;
+  let rate = c.chaletPerHead;
+  for (const t of (c.chaletTiers || [])) {
+    if (heads >= t.minPeople) rate = Math.min(rate, t.perHead);
+  }
+  return rate;
+}
+
+// Chalet cost per person: the tiered rate, less each person's slice of the
+// fixed £600 credit. The credit doesn't grow with the group, so extra heads
+// thin it — which is why 9 to 11 costs everyone more than 8 or 12 does.
 function chaletShare() {
-  const c = CONFIG.costs, cr = CONFIG.credit;
+  const cr = CONFIG.credit;
   const heads = Math.max(counted().length, 1);
-  return creditView === "split"
-    ? c.chaletPerHead - cr.amount / heads
-    : c.chaletPerHead;
+  const rate = chaletRateFor(heads);
+  return creditView === "split" ? rate - cr.amount / heads : rate;
 }
 
 // Pass a person to get their individual figure; pass nothing for the standard head.
@@ -497,7 +507,9 @@ function renderBreakdown() {
   const heads = Math.max(counted().length, 1);
   const rows = [];
 
-  rows.push(["Chalet <span class='est'>per person, min 8</span>", money(c.chaletPerHead)]);
+  const rate = chaletRateFor(heads);
+  rows.push(["Chalet <span class='est'>per person, " +
+    (rate < c.chaletPerHead ? "12+ group rate" : "min 8") + "</span>", money(rate)]);
   if (creditView === "split" && cr.amount > 0) {
     rows.push(["Operator credit, split " + heads + " ways", "&minus;" + money(cr.amount / heads)]);
   }
