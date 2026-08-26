@@ -202,26 +202,24 @@ const CONFIG = {
      Martin's hard deadline — the chalet balance 2 weeks before arrival,
      20 Feb 2027 — with slack, because chasing seven people takes weeks.
 
-     Stage 1 is the flight only. It exists to put the £1,187.94 Ryanair
-     bill in Jake's account before he pays it. Anyone booking their own
-     seat owes nothing at this stage.
+     Stage 1 recovers what Jake is out of pocket RIGHT NOW: his own share
+     of Martin's £400 chalet deposit (already fronted), plus the seat for
+     anyone whose flight Jake is booking. Jack books his own, so his
+     stage 1 is deposit-share only.
 
-     Jake still fronts Martin's £400 deposit himself; that comes back in
-     stages 2 and 3, which split the £345 chalet share.
-
-     A null amount means "computed": stage 1 is their flight, and the last
-     stage is whatever remains, so the stages always sum to the total even
-     if a fare moves.                                                      */
+     A null amount means "computed": the last stage is whatever remains,
+     so the stages always sum to the total even if a fare moves.           */
   schedule: {
-    depositPerHead: 0,        // no chalet money in stage 1 — flights only
+    // £400 / 8 — Jake's own slice of the chalet deposit he's already paid.
+    depositPerHead: 50,
     depositFlights: true,
     depositDue: "2026-09-30",
 
     stages: [
-      { label: "Your flight",
+      { label: "Deposit",
         due: "2026-09-30",
         amount: null,
-        why: "Covers your seat so the six can be booked before the fare climbs. Booking your own? Nothing due here." },
+        why: "Covers your share of the £400 chalet deposit Jake's already paid Martin, plus your seat if Jake's booking your flight." },
       { label: "Chalet, first half",
         due: "2026-11-30",
         amount: 175,
