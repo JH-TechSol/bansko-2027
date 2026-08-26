@@ -213,6 +213,11 @@ const CONFIG = {
     // £400 / 8 — Jake's own slice of the chalet deposit he's already paid.
     depositPerHead: 50,
     depositFlights: true,
+    // The precise ask for anyone whose flight Jake books is £247.99 (£50
+    // deposit share + £197.99 fare). £250 is easier to remember and transfer.
+    // The ~£2 difference isn't lost — stagesFor() always nets against the
+    // true total owed, so it just comes off their next instalment.
+    depositRoundedViaJake: 250,
     depositDue: "2026-09-30",
 
     stages: [

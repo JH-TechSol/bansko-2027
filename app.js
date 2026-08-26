@@ -565,8 +565,14 @@ function renderBreakdown() {
 
 // The deposit covers what Jake is out of pocket up front: his share of Martin's
 // chalet deposit, plus the flight for anyone whose seat Jake is booking.
+// Where Jake's booking the flight, config can round that ask to a clean number
+// (depositRoundedViaJake) rather than asking for an odd amount like £247.99 —
+// the real total owed is untouched, so the gap just comes off the next stage.
 function depositFor(person) {
   const s = CONFIG.schedule;
+  if (s.depositFlights && flightViaJake(person) && s.depositRoundedViaJake != null) {
+    return s.depositRoundedViaJake;
+  }
   let d = s.depositPerHead;
   if (s.depositFlights && flightViaJake(person)) {
     const row = travelRows(person).find(x => x.label === "Flights");
