@@ -82,6 +82,9 @@ const CONFIG = {
       { label: "Lift pass",
         note: "estimate, buy in resort",
         amount: 295, estimate: true, viaJake: false },
+      { label: "Chalet tip",
+        note: "amount TBC — customary for chalet staff, ask Jake nearer the time",
+        amount: 0, estimate: true, viaJake: false },
     ],
   },
 
@@ -232,7 +235,7 @@ const CONFIG = {
       { label: "Chalet, balance",
         due: "2027-01-31",
         amount: null,
-        why: "Three weeks before Martin's deadline, so there's room to chase." },
+        why: "" },
     ],
 
     operatorDeadline: "2027-02-20",
@@ -336,11 +339,11 @@ const CONFIG = {
   seedPeople: [
     { name: "Jake Hodgson",   key: "demo-jake",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "Organiser" },
     { name: "Jake Love",      key: "demo-love",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
-    { name: "Steve Turnbill", key: "demo-steve", status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
+    { name: "Steve Turbill",  key: "demo-steve", status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
     { name: "Matt Barker",    key: "demo-matt",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
     { name: "Adam Swan",      key: "demo-adam",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
     { name: "Jack Myhill",    key: "demo-jack",  status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
-    { name: "James Primmer",  key: "demo-james", status: "pending",   depositPaid: 0, balancePaid: 0, notes: "Awaiting wife's approval" },
+    { name: "James Primmer",  key: "demo-james", status: "confirmed", depositPaid: 0, balancePaid: 0, notes: "" },
     { name: "8th place",      key: "",           status: "open",      depositPaid: 0, balancePaid: 0, notes: "Seat open — needs a name to hold the £420pp chalet price" },
   ],
 };

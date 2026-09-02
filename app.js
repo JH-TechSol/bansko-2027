@@ -552,11 +552,11 @@ function renderBreakdown() {
       " rather than a firm quote, so treat the total as close but not final.");
   }
   const c2 = chosenFlight();
-  if (c2 && !countTransport()) {
+  if (c2 && !countTransport() && transferPerHead(c2) > 0) {
     notes.push("Not counted above: getting to " + esc(c2.airport) + ", roughly " +
       money0(transferPerHead(c2)) + " each " +
       (CONFIG.transport.chosen === "cars" ? "sharing two cars" : "on a minibus") +
-      ". We'll settle that nearer the time.");
+      ". Doesn't apply if you're sorting your own flights and transfer. We'll settle it nearer the time.");
   }
 
   $("creditNote").innerHTML = notes.length
