@@ -63,15 +63,27 @@ function resolveMe() {
   return match;
 }
 
-function renderGate() {
+// Asked once per device — the answer is stashed via storeKey() the same way a
+// ?k= link used to be, so a reload next week still knows who you are. Only
+// people with a real key (i.e. not the still-open "8th place" row) are offered.
+function renderWhoAreYou() {
+  const pickable = people.filter(p => p.key);
   document.querySelector(".wrap").innerHTML =
     '<div class="card pad" style="margin-top:8px">' +
-      "<h3 style='margin:0 0 8px'>You need your own link</h3>" +
-      "<p style='margin:0 0 12px;color:var(--ink-soft)'>Everyone going to Bansko has their own link. " +
-      "Yours came over WhatsApp — open that one and this page will remember you on this phone.</p>" +
-      "<p style='margin:0;color:var(--ink-soft)'>Lost it? Give Jake a shout and he'll send it again.</p>" +
+      "<h3 style='margin:0 0 8px'>Who are you?</h3>" +
+      "<p style='margin:0 0 12px;color:var(--ink-soft)'>Pick your name — this page will remember " +
+      "you next time you open it on this phone or computer.</p>" +
+      '<div id="whoAreYouList" class="who-list"></div>' +
     "</div>";
   if ($("banner")) $("banner").innerHTML = "";
+
+  $("whoAreYouList").innerHTML = pickable.map(p =>
+    '<button data-key="' + esc(p.key) + '">' + esc(p.name) + "</button>").join("");
+  // Reload rather than calling renderAll() directly: the picker replaced the
+  // whole .wrap, so the page sections renderAll() writes into no longer exist.
+  // A reload re-runs init() fresh, which now finds the just-stored key.
+  $("whoAreYouList").querySelectorAll("button").forEach(b =>
+    b.addEventListener("click", () => { storeKey(b.dataset.key); location.reload(); }));
 }
 
 /* ---------- CSV ---------- */
@@ -837,6 +849,6 @@ function renderAll() {
 
   people = await loadPeople();
   me = resolveMe();
-  if (CONFIG.access.requireKey && !(demoMode && isLocal) && !me) { renderHeader(); renderGate(); return; }
+  if (CONFIG.access.requireKey && !(demoMode && isLocal) && !me) { renderHeader(); renderWhoAreYou(); return; }
   renderAll();
 })();

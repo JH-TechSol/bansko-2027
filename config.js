@@ -29,9 +29,12 @@ const CONFIG = {
   dataUrl: "https://bansko-roster.bansko-roster-worker.workers.dev",
 
   /* --- Access ------------------------------------------------------
-     Each person gets their own link: <siteUrl>/?k=THEIRKEY
-     Mint the keys with links.html, paste them into the Sheet's Key
-     column, then WhatsApp each person their link.
+     One link for everyone: <siteUrl>. First visit shows a "Who are
+     you?" picker built from the Sheet's Name/Key columns; the pick is
+     stashed in localStorage so it isn't asked again on that device.
+     A direct <siteUrl>/?k=THEIRKEY link still works too (skips the
+     picker, e.g. for testing as a specific person) but nobody needs
+     minting or WhatsApping keys any more — links.html is legacy.
      requireKey: false shows the page to anyone who has the URL.      */
   access: {
     requireKey: true,
@@ -83,8 +86,8 @@ const CONFIG = {
         note: "estimate, buy in resort",
         amount: 295, estimate: true, viaJake: false },
       { label: "Chalet tip",
-        note: "amount TBC — customary for chalet staff, ask Jake nearer the time",
-        amount: 0, estimate: true, viaJake: false },
+        note: "customary for chalet staff, collected nearer the time",
+        amount: 30, estimate: true, viaJake: false },
     ],
   },
 
@@ -231,7 +234,7 @@ const CONFIG = {
       { label: "Chalet, first half",
         due: "2026-11-30",
         amount: 175,
-        why: "Before Christmas on purpose — nobody wants a ski bill in January." },
+        why: "" },
       { label: "Chalet, balance",
         due: "2027-01-31",
         amount: null,

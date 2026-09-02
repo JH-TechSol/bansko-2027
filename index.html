@@ -169,6 +169,15 @@ tr.total td { font-weight: 700; background: var(--panel-2); font-size: 16px; }
 }
 .toggle button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 
+/* ---- who-are-you picker ---- */
+.who-list { display: flex; flex-direction: column; gap: 8px; }
+.who-list button {
+  font: inherit; font-size: 15px; font-weight: 600; text-align: left;
+  padding: 12px 16px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+}
+.who-list button:hover { border-color: var(--accent); color: var(--accent); }
+
 /* ---- info blocks ---- */
 .flight { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 14px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 .flight:last-child { border-bottom: 0; }
