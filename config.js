@@ -137,7 +137,7 @@ const CONFIG = {
         quoted: true,   // real checkout price, not an estimate
         transfer: { miles: 130, drive: "2h 20m", driveHours: 2.33,
                     parkingPerCar: 75, minibusPerHead: 75 },
-        verdict: "The York contingent. Early start, but home in daylight.",
+        verdict: "The plan — everyone except Jack flies from here.",
       },
       {
         iata: "EDI", airport: "Edinburgh",
@@ -150,7 +150,7 @@ const CONFIG = {
         // Matt reverted to flying both ways with the group, 21 Aug 2026, so
         // nobody is on this now. Kept because it's the only Sofia-Edinburgh
         // flight that day and it leaves at 11:55, same as Birmingham.
-        verdict: "Only Sofia-Edinburgh flight that day. Nobody on it now.",
+        verdict: "Not being used — kept here for reference only.",
       },
       {
         iata: "STN", airport: "London Stansted",
@@ -158,7 +158,7 @@ const CONFIG = {
         back: { code: "FR2691", depart: "12:35", arrive: "13:55", fare: 77.54 },
         transfer: { miles: 0, drive: "local", driveHours: 0,
                     parkingPerCar: 0, minibusPerHead: 0 },
-        verdict: "Jack. The morning pair — the cheap Stansted flights land hours after everyone else.",
+        verdict: "Jack's own route, booked separately.",
       },
     ],
   },
@@ -249,12 +249,11 @@ const CONFIG = {
   flights: {
     airline: "Ryanair",
     fare: "basic fare plus a 20kg hold bag",
-    // Not booked as of 17 Aug 2026, and the airport isn't settled either —
-    // see flightOptions. Times and codes below follow flightOptions.chosen.
+    // Airport decided (Birmingham) — not yet ticketed as of 2 Sep 2026.
+    // Times and codes below follow flightOptions.chosen.
     booked: false,
-    notBookedWarning: "Not booked yet, and the airport isn't settled — see the " +
-      "options below. Fares move, and eight seats going at once is what pushes " +
-      "them into the next price band.",
+    notBookedWarning: "Not booked yet — fares move, and eight seats going at " +
+      "once is what pushes them into the next price band.",
   },
 
   /* --- Beds ---------------------------------------------------------
